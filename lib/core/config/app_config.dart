@@ -4,6 +4,6 @@ class AppConfig {
     defaultValue: 'https://sectros.com',
   );
 
-  static const String apiPrefix = '/api';
+  static const String apiPrefix = '/central-api';
   static String get apiUrl => '$baseUrl$apiPrefix';
 }

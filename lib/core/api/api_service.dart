@@ -14,6 +14,12 @@ class ApiService {
     _dio.options.headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      // Use a real mobile browser UA so Cloudflare Bot Fight Mode
+      // doesn't block Dart's default 'Dart/x.x (dart:io)' agent.
+      'User-Agent':
+          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
+          'AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 '
+          'SectrosApp/1.0',
     };
     _dio.options.connectTimeout = const Duration(seconds: 15);
     _dio.options.receiveTimeout = const Duration(seconds: 15);
