@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
 import '../../../models/user.dart';
@@ -84,15 +85,41 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
         return false;
       }
+    } on DioException catch (e) {
+      final msg = _dioErrorMessage(e);
+      state = state.copyWith(isLoading: false, error: msg);
+      return false;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString().contains('DioException')
-            ? 'Connection error. Check your network.'
-            : 'An error occurred during login',
-      );
+      state = state.copyWith(isLoading: false, error: 'Unexpected error during login.');
       return false;
     }
+  }
+
+  /// Converts a DioException into a human-readable message.
+  static String _dioErrorMessage(DioException e) {
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout) {
+      return 'Request timed out. Please try again.';
+    }
+    if (e.type == DioExceptionType.connectionError) {
+      return 'Cannot reach the server. Please check your internet connection.';
+    }
+    final status = e.response?.statusCode;
+    if (status == 403) {
+      return 'Access denied by server (403). Please contact support.';
+    }
+    if (status == 422) {
+      final errors = e.response?.data?['errors'];
+      if (errors is Map) {
+        return errors.values.expand((v) => v is List ? v : [v]).join('\n');
+      }
+      return e.response?.data?['message'] ?? 'Validation error.';
+    }
+    if (status != null) {
+      return e.response?.data?['message'] ?? 'Server error ($status).';
+    }
+    return 'Connection error. Please check your internet.';
   }
 
   Future<bool> register(Map<String, dynamic> data) async {
@@ -127,11 +154,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
         return false;
       }
+    } on DioException catch (e) {
+      state = state.copyWith(isLoading: false, error: _dioErrorMessage(e));
+      return false;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'An error occurred during registration',
-      );
+      state = state.copyWith(isLoading: false, error: 'Unexpected error during registration.');
       return false;
     }
   }
@@ -154,11 +181,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
         return false;
       }
+    } on DioException catch (e) {
+      state = state.copyWith(isLoading: false, error: _dioErrorMessage(e));
+      return false;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'An error occurred',
-      );
+      state = state.copyWith(isLoading: false, error: 'Unexpected error.');
       return false;
     }
   }
