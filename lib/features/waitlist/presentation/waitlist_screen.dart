@@ -117,8 +117,8 @@ class WaitlistScreen extends ConsumerWidget {
             SizedBox(width: double.infinity, child: FilledButton(
               onPressed: () {
                 final data = <String, dynamic>{
-                  'guest_name': nameCtrl.text.trim(),
-                  'phone': phoneCtrl.text.trim(),
+                  'customer_name': nameCtrl.text.trim(),
+                  'customer_phone': phoneCtrl.text.trim(),
                   'party_size': int.tryParse(partyCtrl.text) ?? 2,
                   'notes': notesCtrl.text.trim(),
                 };

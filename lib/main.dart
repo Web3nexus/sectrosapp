@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'core/theme/app_theme.dart';
@@ -12,12 +13,11 @@ import 'features/reservations/presentation/reservations_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
 import 'features/auth/presentation/forgot_password_screen.dart';
-import 'features/menu/presentation/menu_screen.dart';
-import 'features/staff/presentation/staff_screen.dart';
+import 'features/staff/presentation/staff_dashboard_screen.dart';
+import 'features/staff/presentation/staff_messages_screen.dart';
 import 'features/notifications/presentation/notifications_screen.dart';
-import 'features/billing/presentation/billing_screen.dart';
-import 'features/waitlist/presentation/waitlist_screen.dart';
-import 'features/shifts/presentation/shifts_screen.dart';
+import 'features/inbox/presentation/inbox_screen.dart';
+import 'features/finance/presentation/finance_screen.dart';
 import 'models/user.dart';
 
 final _router = GoRouter(
@@ -62,19 +62,18 @@ final _router = GoRouter(
       routes: [
         GoRoute(
           path: '/dashboard',
-          builder: (context, state) => const HomeDashboard(),
+          builder: (context, state) {
+            final container = ProviderScope.containerOf(context);
+            final user = container.read(userProvider);
+            if (user != null && user.isStaff) {
+              return const StaffDashboardScreen();
+            }
+            return const HomeDashboard();
+          },
         ),
         GoRoute(
           path: '/orders',
           builder: (context, state) => const OrdersScreen(),
-        ),
-        GoRoute(
-          path: '/menu',
-          builder: (context, state) => const MenuScreen(),
-        ),
-        GoRoute(
-          path: '/staff',
-          builder: (context, state) => const StaffScreen(),
         ),
         GoRoute(
           path: '/tables',
@@ -85,6 +84,14 @@ final _router = GoRouter(
           builder: (context, state) => const ReservationsScreen(),
         ),
         GoRoute(
+          path: '/inbox',
+          builder: (context, state) => const InboxScreen(),
+        ),
+        GoRoute(
+          path: '/finance',
+          builder: (context, state) => const FinanceScreen(),
+        ),
+        GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
@@ -93,16 +100,8 @@ final _router = GoRouter(
           builder: (context, state) => const NotificationsScreen(),
         ),
         GoRoute(
-          path: '/billing',
-          builder: (context, state) => const BillingScreen(),
-        ),
-        GoRoute(
-          path: '/waitlist',
-          builder: (context, state) => const WaitlistScreen(),
-        ),
-        GoRoute(
-          path: '/shifts',
-          builder: (context, state) => const ShiftsScreen(),
+          path: '/staff-messages',
+          builder: (context, state) => const StaffMessagesScreen(),
         ),
       ],
     ),
@@ -110,6 +109,8 @@ final _router = GoRouter(
 );
 
 void main() {
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
   runApp(
     const ProviderScope(
       child: MyApp(),

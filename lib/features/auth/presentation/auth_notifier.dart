@@ -46,8 +46,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = state.copyWith(isLoading: false, isAuthenticated: true);
         return true;
       }
+    } on DioException catch (e) {
+      // Only clear auth on 401 Unauthorized — 403, timeout, or network issues
+      // should NOT invalidate a valid token.
+      if (e.response?.statusCode == 401) {
+        await _apiService.clearAuth();
+      }
     } on Exception {
-      await _apiService.clearAuth();
+      // Non-Dio exceptions — do not clear token, user may just be offline.
     }
     state = state.copyWith(isLoading: false, isAuthenticated: false);
     return false;

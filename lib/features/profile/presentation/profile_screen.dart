@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
@@ -60,9 +61,9 @@ class ProfileScreen extends ConsumerWidget {
                   onTap: () => context.push('/notifications'),
                 ),
                 _SettingsTile(
-                  icon: LucideIcons.lock,
-                  title: 'Security & 2FA',
-                  onTap: () {},
+                  icon: LucideIcons.keyRound,
+                  title: 'API Token',
+                  onTap: () => _showTokenSheet(context, ref),
                 ),
                 _SettingsTile(
                   icon: LucideIcons.helpCircle,
@@ -101,6 +102,233 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 120),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showTokenSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) => _ApiTokenSheet(api: ref.read(apiServiceProvider)),
+    );
+  }
+}
+
+class _ApiTokenSheet extends StatefulWidget {
+  final ApiService api;
+  const _ApiTokenSheet({required this.api});
+
+  @override
+  State<_ApiTokenSheet> createState() => _ApiTokenSheetState();
+}
+
+class _ApiTokenSheetState extends State<_ApiTokenSheet> {
+  String? _token;
+  bool _obscured = true;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadToken();
+  }
+
+  Future<void> _loadToken() async {
+    final token = await widget.api.getToken();
+    if (mounted) {
+      setState(() {
+        _token = token;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  LucideIcons.keyRound,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'API Token',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Use this token to authenticate API requests from external services.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 20),
+          if (_loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_token == null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Icon(
+                      LucideIcons.alertCircle,
+                      size: 32,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'No token found. Try logging in again.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SelectableText(
+                      _obscured ? _maskToken(_token!) : _token!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _IconButton(
+                    icon: _obscured ? LucideIcons.eye : LucideIcons.eyeOff,
+                    onPressed: () => setState(() => _obscured = !_obscured),
+                    tooltip: _obscured ? 'Reveal token' : 'Hide token',
+                  ),
+                  const SizedBox(width: 4),
+                  _IconButton(
+                    icon: LucideIcons.copy,
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: _token!));
+                      HapticFeedback.lightImpact();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Token copied'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                    },
+                    tooltip: 'Copy token',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Keep this token secret. Do not share it publicly.',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  String _maskToken(String token) {
+    if (token.length <= 8) return '*' * token.length;
+    return token.substring(0, 4) + '*' * (token.length - 8) + token.substring(token.length - 4);
+  }
+}
+
+class _IconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final String tooltip;
+
+  const _IconButton({
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 36,
+      height: 36,
+      child: IconButton(
+        icon: Icon(icon, size: 16),
+        onPressed: onPressed,
+        tooltip: tooltip,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        splashRadius: 18,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
       ),
     );
   }

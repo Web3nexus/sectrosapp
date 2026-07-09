@@ -38,9 +38,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -49,12 +49,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               const SizedBox(height: 48),
 
-              // ── Branding ──────────────────────────────────────────────────
               Column(
                 children: [
-                  // Black logo on white background
                   Image.asset(
-                    'assets/images/logo_black.png',
+                    isDark ? 'assets/images/logo_white.png' : 'assets/images/logo_black.png',
                     height: 56,
                   ),
                   const SizedBox(height: 12),
@@ -76,7 +74,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 36),
 
-              // ── Error banner ───────────────────────────────────────────────
               if (authState.error != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -103,7 +100,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
               ],
 
-              // ── Email field ────────────────────────────────────────────────
               Text(
                 'Email',
                 style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
@@ -113,14 +109,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'you@company.com',
                   prefixIcon: Icon(LucideIcons.mail, size: 18),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // ── Password field ─────────────────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -146,21 +141,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _handleLogin(),
                 decoration: InputDecoration(
-                  hintText: '••••••••',
-                  prefixIcon: const Icon(LucideIcons.lock, size: 18),
+                  hintText: 'Password',
+                  prefixIcon: Icon(LucideIcons.lock, size: 18),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
                       size: 18,
                     ),
                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    splashRadius: 20,
+                    tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                   ),
                 ),
               ),
               const SizedBox(height: 24),
 
-              // ── Sign in button ─────────────────────────────────────────────
               ElevatedButton(
                 onPressed: authState.isLoading ? null : _handleLogin,
                 child: authState.isLoading
@@ -172,7 +169,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 24),
 
-              // ── Register link ──────────────────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

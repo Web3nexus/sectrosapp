@@ -21,6 +21,7 @@ class MainLayout extends ConsumerWidget {
 
     List<NavItem> navItems = [
       NavItem(icon: LucideIcons.home, label: 'Home', index: 0, route: '/dashboard'),
+      NavItem(icon: LucideIcons.messageSquare, label: 'Inbox', index: 6, route: '/inbox'),
       NavItem(icon: LucideIcons.clipboardList, label: 'Orders', index: 1, route: '/orders'),
       NavItem(icon: LucideIcons.layoutGrid, label: 'Tables', index: 2, route: '/tables'),
       NavItem(icon: LucideIcons.calendar, label: 'Bookings', index: 3, route: '/reservations'),
@@ -30,36 +31,26 @@ class MainLayout extends ConsumerWidget {
 
     if (user != null) {
       if (user.isOwner) {
-        navItems.insert(1, NavItem(
-          icon: LucideIcons.bookOpen,
-          label: 'Menu',
-          index: 10,
-          route: '/menu',
-        ));
-        navItems.insert(2, NavItem(
-          icon: LucideIcons.users,
-          label: 'Staff',
-          index: 11,
-          route: '/staff',
-        ));
-        navItems.insert(3, NavItem(
-          icon: LucideIcons.creditCard,
-          label: 'Billing',
-          index: 12,
-          route: '/billing',
-        ));
-        navItems.insert(4, NavItem(
-          icon: LucideIcons.clock,
-          label: 'Shifts',
-          index: 13,
-          route: '/shifts',
-        ));
-        navItems.insert(5, NavItem(
-          icon: LucideIcons.listOrdered,
-          label: 'Waitlist',
-          index: 14,
-          route: '/waitlist',
-        ));
+        navItems = [
+          NavItem(icon: LucideIcons.home, label: 'Home', index: 0, route: '/dashboard'),
+          NavItem(icon: LucideIcons.wallet, label: 'Finance', index: 8, route: '/finance'),
+          NavItem(icon: LucideIcons.messageSquare, label: 'Inbox', index: 6, route: '/inbox'),
+          NavItem(icon: LucideIcons.clipboardList, label: 'Orders', index: 1, route: '/orders'),
+          NavItem(icon: LucideIcons.layoutGrid, label: 'Tables', index: 2, route: '/tables'),
+          NavItem(icon: LucideIcons.calendar, label: 'Bookings', index: 3, route: '/reservations'),
+          NavItem(icon: LucideIcons.bell, label: 'Alerts', index: 4, route: '/notifications', badge: notifState.unreadCount),
+          NavItem(icon: LucideIcons.user, label: 'Profile', index: 5, route: '/profile'),
+        ];
+      } else if (user.isStaff) {
+        navItems = [
+          NavItem(icon: LucideIcons.home, label: 'Home', index: 0, route: '/dashboard'),
+          NavItem(icon: LucideIcons.mail, label: 'Messages', index: 7, route: '/staff-messages'),
+          NavItem(icon: LucideIcons.messageSquare, label: 'Inbox', index: 6, route: '/inbox'),
+          NavItem(icon: LucideIcons.clipboardList, label: 'Orders', index: 1, route: '/orders'),
+          NavItem(icon: LucideIcons.layoutGrid, label: 'Tables', index: 2, route: '/tables'),
+          NavItem(icon: LucideIcons.bell, label: 'Alerts', index: 4, route: '/notifications', badge: notifState.unreadCount),
+          NavItem(icon: LucideIcons.user, label: 'Profile', index: 5, route: '/profile'),
+        ];
       }
       if (user.role == 'chef') {
         navItems = [
