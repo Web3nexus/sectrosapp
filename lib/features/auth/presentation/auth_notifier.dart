@@ -34,11 +34,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._apiService, this._userNotifier) : super(AuthState());
 
   Future<bool> tryAutoLogin() async {
-    final token = await _apiService.getToken();
-    if (token == null || token.isEmpty) return false;
-
     state = state.copyWith(isLoading: true, error: null);
     try {
+      final token = await _apiService.getToken();
+      if (token == null || token.isEmpty) {
+        state = state.copyWith(isLoading: false, isAuthenticated: false);
+        return false;
+      }
+
       final response = await _apiService.client.get('/user');
       if (response.statusCode == 200) {
         final user = User.fromJson(response.data);
@@ -52,8 +55,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (e.response?.statusCode == 401) {
         await _apiService.clearAuth();
       }
-    } on Exception {
-      // Non-Dio exceptions — do not clear token, user may just be offline.
+    } catch (e) {
+      // Catch platform keystore decryption exceptions or offline issues.
+      // If it is a Keystore corruption exception, we clear storage to allow a fresh login.
+      if (e.toString().contains('PlatformException') || e.toString().contains('keystore')) {
+        try {
+          await _apiService.clearAuth();
+        } catch (_) {}
+      }
     }
     state = state.copyWith(isLoading: false, isAuthenticated: false);
     return false;
