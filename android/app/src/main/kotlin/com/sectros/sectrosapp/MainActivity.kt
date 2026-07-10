@@ -1,4 +1,4 @@
-package com.sectros.sectros_app
+package com.sectros.sectrosapp
 
 import io.flutter.embedding.android.FlutterActivity
 
