@@ -9,11 +9,224 @@ import '../../../widgets/common/error_view.dart';
 import '../../../widgets/common/animations.dart';
 import '../../../core/theme/app_colors.dart';
 
-class ReservationsScreen extends ConsumerWidget {
+class ReservationsScreen extends ConsumerStatefulWidget {
   const ReservationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ReservationsScreen> createState() => _ReservationsScreenState();
+}
+
+class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
+  void _showAddReservationSheet() {
+    final nameCtl = TextEditingController();
+    final emailCtl = TextEditingController();
+    final phoneCtl = TextEditingController();
+    final guestsCtl = TextEditingController(text: '2');
+    final notesCtl = TextEditingController();
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    TimeOfDay selectedTime = const TimeOfDay(hour: 19, minute: 0);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(ctx).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: EdgeInsets.only(
+            left: 24, right: 24, top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text('Add Reservation',
+                  style: Theme.of(ctx).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Customer name
+                TextField(
+                  controller: nameCtl,
+                  decoration: InputDecoration(
+                    labelText: 'Customer Name *',
+                    prefixIcon: const Icon(LucideIcons.user, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: emailCtl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email *',
+                    prefixIcon: const Icon(LucideIcons.mail, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: phoneCtl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Phone *',
+                    prefixIcon: const Icon(LucideIcons.phone, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: guestsCtl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Number of Guests *',
+                    prefixIcon: const Icon(LucideIcons.users, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Date picker
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: selectedDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) setModalState(() => selectedDate = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(LucideIcons.calendar, size: 20, color: AppColors.mutedForeground),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                          style: Theme.of(ctx).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Time picker
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showTimePicker(
+                      context: ctx,
+                      initialTime: selectedTime,
+                    );
+                    if (picked != null) setModalState(() => selectedTime = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(LucideIcons.clock, size: 20, color: AppColors.mutedForeground),
+                        const SizedBox(width: 12),
+                        Text(
+                          selectedTime.format(ctx),
+                          style: Theme.of(ctx).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: notesCtl,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: 'Special Requests',
+                    prefixIcon: const Icon(LucideIcons.fileText, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      if (nameCtl.text.isEmpty || emailCtl.text.isEmpty || phoneCtl.text.isEmpty) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(content: Text('Please fill in all required fields')),
+                        );
+                        return;
+                      }
+
+                      final dt = DateTime(
+                        selectedDate.year, selectedDate.month, selectedDate.day,
+                        selectedTime.hour, selectedTime.minute,
+                      );
+                      final isoTime = dt.toIso8601String();
+
+                      final err = await ref.read(reservationsProvider.notifier).createReservation({
+                        'customer_name': nameCtl.text.trim(),
+                        'customer_email': emailCtl.text.trim(),
+                        'customer_phone': phoneCtl.text.trim(),
+                        'party_size': int.tryParse(guestsCtl.text) ?? 2,
+                        'reservation_time': isoTime,
+                        'special_requests': notesCtl.text.trim(),
+                        'source': 'app',
+                      });
+
+                      if (!ctx.mounted) return;
+                      Navigator.pop(ctx);
+
+                      if (err != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(err), backgroundColor: AppColors.destructive),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Reservation created!'), backgroundColor: AppColors.success),
+                        );
+                      }
+                    },
+                    icon: const Icon(LucideIcons.calendarCheck, size: 18),
+                    label: const Text('Create Reservation'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final resState = ref.watch(reservationsProvider);
 
     return Scaffold(
@@ -27,16 +240,24 @@ class ReservationsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.calendarPlus, size: 20),
-            onPressed: () {},
+            tooltip: 'Add Reservation',
+            onPressed: _showAddReservationSheet,
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: _buildBody(context, ref, resState),
+      body: _buildBody(context, resState),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddReservationSheet,
+        icon: const Icon(LucideIcons.plus, size: 20),
+        label: const Text('Add Reservation'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      ),
     );
   }
 
-  Widget _buildBody(BuildContext context, WidgetRef ref, ReservationsState state) {
+  Widget _buildBody(BuildContext context, ReservationsState state) {
     if (state.isLoading && state.reservations.isEmpty) {
       return const SkeletonLoader(type: SkeletonType.listTile, itemCount: 6);
     }

@@ -52,6 +52,21 @@ class ReservationNotifier extends StateNotifier<ReservationsState> {
       state = state.copyWith(isLoading: false, error: 'Something went wrong');
     }
   }
+
+  Future<String?> createReservation(Map<String, dynamic> data) async {
+    try {
+      final response = await _apiService.client.post('/reservations', data: data);
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        await fetchReservations();
+        return null;
+      }
+      return response.data?['message'] ?? 'Failed to create reservation';
+    } on DioException catch (e) {
+      return ApiError.fromDio(e).message;
+    } catch (e) {
+      return 'Something went wrong';
+    }
+  }
 }
 
 final reservationsProvider = StateNotifierProvider<ReservationNotifier, ReservationsState>((ref) {

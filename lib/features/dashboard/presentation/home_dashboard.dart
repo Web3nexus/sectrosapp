@@ -8,6 +8,7 @@ import '../../../models/user.dart';
 import '../../../widgets/common/skeleton_loader.dart';
 import '../../../widgets/common/animations.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/main_layout.dart';
 
 class HomeDashboard extends ConsumerWidget {
   const HomeDashboard({super.key});
@@ -95,21 +96,33 @@ class HomeDashboard extends ConsumerWidget {
                   label: 'New Order',
                   icon: LucideIcons.plusCircle,
                   color: AppColors.primary,
-                  onTap: () => HapticFeedback.lightImpact(),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    ref.read(navigationIndexProvider.notifier).state = 1;
+                    context.go('/orders');
+                  },
                 ),
                 const SizedBox(width: 12),
                 _QuickAction(
                   label: 'Reservation',
                   icon: LucideIcons.calendarPlus,
                   color: AppColors.secondary,
-                  onTap: () => HapticFeedback.lightImpact(),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    ref.read(navigationIndexProvider.notifier).state = 3;
+                    context.go('/reservations');
+                  },
                 ),
                 const SizedBox(width: 12),
                 _QuickAction(
                   label: 'Staff',
                   icon: LucideIcons.users,
                   color: AppColors.accent,
-                  onTap: () => HapticFeedback.lightImpact(),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    ref.read(navigationIndexProvider.notifier).state = -1;
+                    context.go('/staff');
+                  },
                 ),
               ],
             ),

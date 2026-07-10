@@ -15,6 +15,7 @@ import 'features/auth/presentation/register_screen.dart';
 import 'features/auth/presentation/forgot_password_screen.dart';
 import 'features/staff/presentation/staff_dashboard_screen.dart';
 import 'features/staff/presentation/staff_messages_screen.dart';
+import 'features/staff/presentation/staff_screen.dart';
 import 'features/notifications/presentation/notifications_screen.dart';
 import 'features/inbox/presentation/inbox_screen.dart';
 import 'features/finance/presentation/finance_screen.dart';
@@ -102,6 +103,10 @@ final _router = GoRouter(
         GoRoute(
           path: '/staff-messages',
           builder: (context, state) => const StaffMessagesScreen(),
+        ),
+        GoRoute(
+          path: '/staff',
+          builder: (context, state) => const StaffScreen(),
         ),
       ],
     ),
