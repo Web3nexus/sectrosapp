@@ -57,7 +57,6 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       }
     } on DioException catch (e) {
       final apiError = ApiError.fromDio(e);
-      if (apiError.isAuthError) await _apiService.clearAuth();
       state = state.copyWith(isLoading: false, error: apiError.message);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Something went wrong');

@@ -39,9 +39,9 @@ class ApiService {
         return handler.next(options);
       },
       onError: (DioException e, handler) async {
-        if (e.response?.statusCode == 401) {
-          await clearAuth();
-        }
+        // Pass 401s through — do NOT clear auth here.
+        // Individual screens show "session expired" and only a
+        // manual logout (or tryAutoLogin failure) clears credentials.
         return handler.next(e);
       },
     ));

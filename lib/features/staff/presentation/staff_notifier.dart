@@ -46,7 +46,6 @@ class StaffNotifier extends StateNotifier<StaffState> {
       }
     } on DioException catch (e) {
       final err = ApiError.fromDio(e);
-      if (err.isAuthError) await _api.clearAuth();
       state = state.copyWith(isLoading: false, error: err.message);
     } catch (_) {
       state = state.copyWith(isLoading: false, error: 'Something went wrong');

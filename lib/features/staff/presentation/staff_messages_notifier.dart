@@ -45,7 +45,6 @@ class StaffMessagesNotifier extends StateNotifier<StaffMessagesState> {
       }
     } on DioException catch (e) {
       final err = ApiError.fromDio(e);
-      if (err.isAuthError) await _api.clearAuth();
       state = state.copyWith(isLoading: false, error: err.message);
     } catch (_) {
       state = state.copyWith(isLoading: false, error: 'Something went wrong');
@@ -58,7 +57,6 @@ class StaffMessagesNotifier extends StateNotifier<StaffMessagesState> {
       await fetch();
     } on DioException catch (e) {
       final err = ApiError.fromDio(e);
-      if (err.isAuthError) await _api.clearAuth();
       state = state.copyWith(error: err.message);
     } catch (_) {
       state = state.copyWith(error: 'Failed to mark message as read');

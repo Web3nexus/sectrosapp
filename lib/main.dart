@@ -19,6 +19,7 @@ import 'features/staff/presentation/staff_screen.dart';
 import 'features/notifications/presentation/notifications_screen.dart';
 import 'features/inbox/presentation/inbox_screen.dart';
 import 'features/finance/presentation/finance_screen.dart';
+import 'features/billing/presentation/billing_screen.dart';
 import 'models/user.dart';
 
 final _router = GoRouter(
@@ -107,6 +108,10 @@ final _router = GoRouter(
         GoRoute(
           path: '/staff',
           builder: (context, state) => const StaffScreen(),
+        ),
+        GoRoute(
+          path: '/billing',
+          builder: (context, state) => const BillingScreen(),
         ),
       ],
     ),

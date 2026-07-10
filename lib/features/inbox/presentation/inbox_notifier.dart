@@ -85,7 +85,6 @@ class InboxNotifier extends StateNotifier<InboxState> {
       }
     } on DioException catch (e) {
       final apiError = ApiError.fromDio(e);
-      if (apiError.isAuthError) await _apiService.clearAuth();
       state = state.copyWith(isLoading: false, error: apiError.message);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Something went wrong');
@@ -106,7 +105,6 @@ class InboxNotifier extends StateNotifier<InboxState> {
       return false;
     } on DioException catch (e) {
       final apiError = ApiError.fromDio(e);
-      if (apiError.isAuthError) await _apiService.clearAuth();
       state = state.copyWith(error: apiError.message);
       return false;
     } catch (_) {

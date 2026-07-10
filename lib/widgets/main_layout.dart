@@ -18,10 +18,10 @@ class MainLayout extends ConsumerWidget {
     final currentIndex = ref.watch(navigationIndexProvider);
     final user = ref.watch(userProvider);
     final notifState = ref.watch(notificationsProvider);
+    final bottomPad = MediaQuery.of(context).padding.bottom;
 
     List<NavItem> navItems = [
       NavItem(icon: LucideIcons.home, label: 'Home', index: 0, route: '/dashboard'),
-      NavItem(icon: LucideIcons.messageSquare, label: 'Inbox', index: 6, route: '/inbox'),
       NavItem(icon: LucideIcons.clipboardList, label: 'Orders', index: 1, route: '/orders'),
       NavItem(icon: LucideIcons.layoutGrid, label: 'Tables', index: 2, route: '/tables'),
       NavItem(icon: LucideIcons.calendar, label: 'Bookings', index: 3, route: '/reservations'),
@@ -31,12 +31,11 @@ class MainLayout extends ConsumerWidget {
 
     if (user != null) {
       if (user.isOwner) {
+        // 6 items max — keep nav clean and uncluttered
         navItems = [
           NavItem(icon: LucideIcons.home, label: 'Home', index: 0, route: '/dashboard'),
           NavItem(icon: LucideIcons.wallet, label: 'Finance', index: 8, route: '/finance'),
-          NavItem(icon: LucideIcons.messageSquare, label: 'Inbox', index: 6, route: '/inbox'),
           NavItem(icon: LucideIcons.clipboardList, label: 'Orders', index: 1, route: '/orders'),
-          NavItem(icon: LucideIcons.layoutGrid, label: 'Tables', index: 2, route: '/tables'),
           NavItem(icon: LucideIcons.calendar, label: 'Bookings', index: 3, route: '/reservations'),
           NavItem(icon: LucideIcons.bell, label: 'Alerts', index: 4, route: '/notifications', badge: notifState.unreadCount),
           NavItem(icon: LucideIcons.user, label: 'Profile', index: 5, route: '/profile'),
@@ -45,7 +44,6 @@ class MainLayout extends ConsumerWidget {
         navItems = [
           NavItem(icon: LucideIcons.home, label: 'Home', index: 0, route: '/dashboard'),
           NavItem(icon: LucideIcons.mail, label: 'Messages', index: 7, route: '/staff-messages'),
-          NavItem(icon: LucideIcons.messageSquare, label: 'Inbox', index: 6, route: '/inbox'),
           NavItem(icon: LucideIcons.clipboardList, label: 'Orders', index: 1, route: '/orders'),
           NavItem(icon: LucideIcons.layoutGrid, label: 'Tables', index: 2, route: '/tables'),
           NavItem(icon: LucideIcons.bell, label: 'Alerts', index: 4, route: '/notifications', badge: notifState.unreadCount),
@@ -61,15 +59,23 @@ class MainLayout extends ConsumerWidget {
       }
     }
 
+    // Nav bar total height: 70px height + 20px bottom margin + system bottom padding
+    final navTotalHeight = 70.0 + 20.0 + bottomPad;
+
     return Scaffold(
       body: Stack(
         children: [
-          child,
+          // Padding pushes screen content above the floating nav bar
+          Padding(
+            padding: EdgeInsets.only(bottom: navTotalHeight),
+            child: child,
+          ),
           Align(
             alignment: Alignment.bottomCenter,
             child: _FloatingBottomNav(
               currentIndex: currentIndex,
               items: navItems,
+              bottomPad: bottomPad,
               onTap: (index) {
                 final item = navItems.firstWhere((i) => i.index == index);
                 ref.read(navigationIndexProvider.notifier).state = index;
@@ -102,32 +108,35 @@ class _FloatingBottomNav extends StatelessWidget {
   final int currentIndex;
   final List<NavItem> items;
   final ValueChanged<int> onTap;
+  final double bottomPad;
 
   const _FloatingBottomNav({
     required this.currentIndex,
     required this.items,
     required this.onTap,
+    required this.bottomPad,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.only(bottom: 30, left: 24, right: 24),
-      height: 70,
+      margin: EdgeInsets.only(bottom: 16 + bottomPad, left: 20, right: 20),
+      height: 68,
       decoration: BoxDecoration(
-        color: (isDark ? AppColors.darkCard : AppColors.card).withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(35),
+        color: (isDark ? AppColors.darkCard : AppColors.card).withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(34),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+            blurRadius: 24,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(35),
+        borderRadius: BorderRadius.circular(34),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Row(
@@ -169,7 +178,7 @@ class _NavIcon extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isActive ? theme.primaryColor.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
@@ -190,17 +199,17 @@ class _NavIcon extends StatelessWidget {
                     right: -6,
                     top: -4,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(3),
                       decoration: const BoxDecoration(
                         color: AppColors.destructive,
                         shape: BoxShape.circle,
                       ),
-                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
                       child: Text(
                         badge! > 9 ? '9+' : '$badge',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 9,
+                          fontSize: 8,
                           fontWeight: FontWeight.w700,
                         ),
                         textAlign: TextAlign.center,
