@@ -56,7 +56,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           state = state.copyWith(
             isLoading: false,
             isAuthenticated: true,
-            needsLock: true,
+            needsLock: false,
           );
           return true;
         }
@@ -73,7 +73,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
             state = state.copyWith(
               isLoading: false,
               isAuthenticated: true,
-              needsLock: true,
+              needsLock: false,
             );
             return true;
           }
@@ -92,7 +92,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           state = state.copyWith(
             isLoading: false,
             isAuthenticated: true,
-            needsLock: true,
+            needsLock: false,
           );
           return true;
         }

@@ -41,7 +41,10 @@ class MenuNotifier extends StateNotifier<MenuState> {
       final response = await _api.client.get('/menu');
       if (response.statusCode == 200) {
         final List<dynamic> data = ApiService.extractList(response.data);
-        final categories = data.map((j) => MenuCategory.fromJson(j)).toList();
+        final categories = data
+            .whereType<Map>()
+            .map((j) => MenuCategory.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
         state = state.copyWith(isLoading: false, categories: categories);
       }
     } on DioException catch (e) {

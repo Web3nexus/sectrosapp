@@ -26,7 +26,8 @@ class ApiError {
     final statusCode = e.response?.statusCode;
     if (statusCode == 401) {
       return ApiError(
-        message: 'Unable to load this data. Please try again.',
+        message: e.response?.data?['message'] ??
+            'Session expired or unauthenticated. Please sign in again.',
         statusCode: 401,
         isAuthError: true,
       );

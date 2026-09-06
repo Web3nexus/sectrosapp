@@ -24,13 +24,14 @@ class WaitlistEntry {
   });
 
   factory WaitlistEntry.fromJson(Map<String, dynamic> json) {
+    final tableMap = json['table'] is Map ? json['table'] as Map : null;
     return WaitlistEntry(
       id: json['id'] is int ? json['id'] : int.parse('${json['id']}'),
       tableId: json['table_id'] is int ? json['table_id'] : int.tryParse('${json['table_id'] ?? ''}'),
-      tableName: json['table_name'] ?? json['table']['name'] ?? '',
-      guestName: json['customer_name'] ?? '',
-      phone: json['customer_phone'],
-      partySize: json['party_size'] ?? 1,
+      tableName: json['table_name'] ?? tableMap?['name']?.toString() ?? '',
+      guestName: json['customer_name'] ?? json['guest_name'] ?? '',
+      phone: json['customer_phone'] ?? json['phone'],
+      partySize: json['party_size'] is int ? json['party_size'] : int.tryParse('${json['party_size'] ?? 1}') ?? 1,
       status: json['status'] ?? 'waiting',
       notes: json['notes'],
       estimatedWait: json['estimated_wait'],

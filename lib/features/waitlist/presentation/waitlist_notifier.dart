@@ -30,7 +30,11 @@ class WaitlistNotifier extends StateNotifier<WaitlistState> {
       final response = await _api.client.get('/waitlist');
       if (response.statusCode == 200) {
         final List<dynamic> data = ApiService.extractList(response.data);
-        state = state.copyWith(isLoading: false, list: data.map((j) => WaitlistEntry.fromJson(j)).toList());
+        final entries = data
+            .whereType<Map>()
+            .map((j) => WaitlistEntry.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
+        state = state.copyWith(isLoading: false, list: entries);
       }
     } on DioException catch (e) {
       final err = ApiError.fromDio(e);

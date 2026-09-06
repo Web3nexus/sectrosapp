@@ -216,6 +216,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onTap: () => context.push('/notifications'),
                   ),
                   _SettingsTile(
+                    icon: LucideIcons.shieldCheck,
+                    title: 'Security & App Lock',
+                    onTap: () => context.push('/security-settings'),
+                  ),
+                  _SettingsTile(
                     icon: LucideIcons.keyRound,
                     title: 'API Token',
                     onTap: _showTokenSheet,

@@ -37,7 +37,11 @@ class ShiftNotifier extends StateNotifier<ShiftState> {
       final response = await _api.client.get('/shifts');
       if (response.statusCode == 200) {
         final List<dynamic> data = ApiService.extractList(response.data);
-        state = state.copyWith(isLoading: false, list: data.map((j) => Shift.fromJson(j)).toList());
+        final shifts = data
+            .whereType<Map>()
+            .map((j) => Shift.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
+        state = state.copyWith(isLoading: false, list: shifts);
       }
     } on DioException catch (e) {
       final err = ApiError.fromDio(e);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/services/biometric_service.dart';
 import 'auth_notifier.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -87,7 +88,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (!mounted) return;
 
     if (success) {
-      context.go('/lock');
+      final bio = ref.read(biometricServiceProvider);
+      final lockEnabled = await bio.isLockEnabled();
+      final hasPin = await bio.hasPin();
+      if (lockEnabled && hasPin && mounted) {
+        context.go('/lock');
+      } else if (mounted) {
+        context.go('/dashboard');
+      }
     } else {
       context.go('/login');
     }
