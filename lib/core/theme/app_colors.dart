@@ -2,11 +2,30 @@ import 'package:flutter/material.dart';
 
 /// Modern Hospitality SaaS Design System Colors
 class AppColors {
-  // ── Primary Brand: Vibrant Emerald / Hospitality Green ───────────────────
-  static const primary          = Color(0xFF11C685); // Main primary brand (new logo)
-  static const primaryDark      = Color(0xFF0EA870); // Pressed / hover
-  static const primaryLight     = Color(0xFFD1FAE5); // Soft tint / active container
-  static const primaryBlue      = Color(0xFF0071E3); // Alternate classic blue brand
+  // ── Primary Brand: Dynamic Vibrant Emerald (default) or Classic Blue ─────
+  static Color primary          = const Color(0xFF11C685); // Main primary brand
+  static Color primaryDark      = const Color(0xFF0EA870); // Pressed / hover
+  static Color primaryLight     = const Color(0xFFD1FAE5); // Soft tint / active container
+  static const primaryGreen     = Color(0xFF11C685);
+  static const primaryBlue      = Color(0xFF0071E3);
+
+  static String currentBrand = 'green';
+
+  static void setBrandColor(String colorName) {
+    final lower = colorName.toLowerCase();
+    currentBrand = lower;
+    if (lower == 'blue') {
+      primary = const Color(0xFF0071E3);
+      primaryDark = const Color(0xFF005EC0);
+      primaryLight = const Color(0xFFD0E7FF);
+      darkPrimaryTeal = const Color(0xFF409CFF);
+    } else {
+      primary = const Color(0xFF11C685);
+      primaryDark = const Color(0xFF0EA870);
+      primaryLight = const Color(0xFFD1FAE5);
+      darkPrimaryTeal = const Color(0xFF11C685);
+    }
+  }
 
   // ── Dark Navy: Contextual Headers & High Priority ─────────────────────────
   static const darkNavy         = Color(0xFF172A3A); // Property headers, dark cards
@@ -67,7 +86,7 @@ class AppColors {
   static const darkTextPrimary  = Color(0xFFF8FAFC); // Primary text
   static const darkTextSecondary= Color(0xFFA7B0BA); // Secondary text
   static const darkBorder       = Color(0xFF2A3947); // Dark separators & borders
-  static const darkPrimaryTeal  = Color(0xFF19C99A); // High visibility teal
+  static Color darkPrimaryTeal  = const Color(0xFF11C685); // High visibility brand accent
   static const darkForeground   = darkTextPrimary;
   static const darkMuted        = Color(0xFF1E2D3A);
 
