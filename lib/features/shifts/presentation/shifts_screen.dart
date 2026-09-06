@@ -212,7 +212,7 @@ class _ShiftTile extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(LucideIcons.clock, size: 22, color: AppColors.primary),
+              child: Icon(LucideIcons.clock, size: 22, color: AppColors.primary),
             ),
             const SizedBox(width: 14),
             Expanded(

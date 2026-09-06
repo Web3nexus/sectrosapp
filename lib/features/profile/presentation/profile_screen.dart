@@ -82,7 +82,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(LucideIcons.headphones, size: 36, color: AppColors.primary),
+              child: Icon(LucideIcons.headphones, size: 36, color: AppColors.primary),
             ),
             const SizedBox(height: 16),
             Text('Support Helpdesk',

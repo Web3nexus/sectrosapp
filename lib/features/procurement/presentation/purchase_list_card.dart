@@ -292,7 +292,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               decoration: InputDecoration(
                 labelText: 'Item name *',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                prefixIcon: const Icon(LucideIcons.shoppingBasket, size: 18),
+                prefixIcon: const Icon(LucideIcons.shoppingBag, size: 18),
               ),
               textCapitalization: TextCapitalization.sentences,
             ),

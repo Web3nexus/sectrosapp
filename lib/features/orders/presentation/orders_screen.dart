@@ -194,7 +194,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               const Text('Total Amount', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               Text(
                 '\$${order.totalAmount.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,

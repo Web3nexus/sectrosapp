@@ -178,7 +178,7 @@ class _TablesScreenState extends ConsumerState<TablesScreen> {
           const SizedBox(height: AppSpacing.s16),
           Row(
             children: [
-              const Icon(LucideIcons.users, size: 18, color: AppColors.primary),
+              Icon(LucideIcons.users, size: 18, color: AppColors.primary),
               const SizedBox(width: AppSpacing.s10),
               Text(
                 'Maximum Capacity: ${table.capacity} persons',

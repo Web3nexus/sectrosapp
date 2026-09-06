@@ -159,7 +159,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           if (customer.phone.isNotEmpty) ...[
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(LucideIcons.phone, size: 20, color: AppColors.primary),
+              leading: Icon(LucideIcons.phone, size: 20, color: AppColors.primary),
               title: const Text('Phone Number', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
               subtitle: Text(
                 customer.phone,
@@ -184,7 +184,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           if (customer.email.isNotEmpty) ...[
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(LucideIcons.mail, size: 20, color: AppColors.primary),
+              leading: Icon(LucideIcons.mail, size: 20, color: AppColors.primary),
               title: const Text('Email Address', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
               subtitle: Text(
                 customer.email,
@@ -209,7 +209,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           if (customer.lastVisit != null) ...[
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(LucideIcons.calendar, size: 20, color: AppColors.primary),
+              leading: Icon(LucideIcons.calendar, size: 20, color: AppColors.primary),
               title: const Text('Last Visit', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
               subtitle: Text(
                 customer.lastVisit!,
