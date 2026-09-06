@@ -78,9 +78,11 @@ class InboxNotifier extends StateNotifier<InboxState> {
     try {
       final response = await _apiService.client.get('/automation/activity');
       if (response.statusCode == 200) {
-        final data = response.data;
-        final List<dynamic> rawList = data is Map ? (data['activity'] as List? ?? []) : (data as List? ?? []);
-        final interactions = rawList.map((json) => AiInteraction.fromJson(json)).toList();
+        final rawList = ApiService.extractList(response.data, 'activity');
+        final interactions = rawList
+            .whereType<Map>()
+            .map((json) => AiInteraction.fromJson(Map<String, dynamic>.from(json)))
+            .toList();
         state = state.copyWith(isLoading: false, interactions: interactions);
       }
     } on DioException catch (e) {

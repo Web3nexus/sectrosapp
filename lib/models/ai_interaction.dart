@@ -28,12 +28,10 @@ class AiInteraction {
   });
 
   factory AiInteraction.fromJson(Map<String, dynamic> json) {
-    final id = json['id'];
-    if (id == null) {
-      throw ArgumentError('Missing required field: id');
-    }
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
     return AiInteraction(
-      id: id is int ? id : int.parse(id.toString()),
+      id: id,
       type: json['type']?.toString() ?? 'inquiry',
       sender: json['sender']?.toString() ?? 'Unknown',
       platform: json['platform']?.toString() ?? 'Web',

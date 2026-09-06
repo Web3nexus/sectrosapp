@@ -26,6 +26,7 @@ import 'features/billing/presentation/billing_screen.dart';
 import 'features/calendar/presentation/calendar_screen.dart';
 import 'features/customers/presentation/customers_screen.dart';
 import 'features/settings/presentation/more_settings_screen.dart';
+import 'features/settings/presentation/security_settings_screen.dart';
 import 'models/user.dart';
 
 final _router = GoRouter(
@@ -135,6 +136,10 @@ final _router = GoRouter(
         GoRoute(
           path: '/billing',
           builder: (context, state) => const BillingScreen(),
+        ),
+        GoRoute(
+          path: '/security-settings',
+          builder: (context, state) => const SecuritySettingsScreen(),
         ),
       ],
     ),

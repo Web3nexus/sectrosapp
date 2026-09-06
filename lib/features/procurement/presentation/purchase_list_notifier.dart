@@ -44,7 +44,10 @@ class PurchaseListNotifier extends StateNotifier<PurchaseListState> {
       final response = await _api.client.get('/procurement/shopping-items');
       if (response.statusCode == 200) {
         final data = ApiService.extractList(response.data);
-        final items = data.map((j) => ShoppingItem.fromJson(j as Map<String, dynamic>)).toList();
+        final items = data
+            .whereType<Map>()
+            .map((j) => ShoppingItem.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
         state = state.copyWith(isLoading: false, items: items);
       }
     } on DioException catch (e) {
@@ -59,9 +62,10 @@ class PurchaseListNotifier extends StateNotifier<PurchaseListState> {
     try {
       await _api.client.post('/procurement/shopping-items', data: {
         'name': name,
+        'item_name': name,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
         if (unit != null && unit.isNotEmpty) 'unit': unit,
-        if (quantity != null) 'quantity': quantity,
+        'quantity': quantity ?? 1.0,
       });
       await fetch();
       return true;

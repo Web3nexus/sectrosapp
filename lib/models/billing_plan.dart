@@ -18,14 +18,30 @@ class BillingPlan {
   });
 
   factory BillingPlan.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
+    final rawPrice = json['price'];
+    final price = rawPrice is num ? rawPrice.toDouble() : (double.tryParse('$rawPrice') ?? 0.0);
+
+    final rawFeatures = json['features'];
+    List<String> features = [];
+    if (rawFeatures is List) {
+      features = rawFeatures.map((e) => e.toString()).toList();
+    } else if (rawFeatures is Map) {
+      features = rawFeatures.entries
+          .where((e) => e.value == true || e.value == 1 || e.value == '1' || e.value is String)
+          .map((e) => e.key.toString().replaceAll('_', ' '))
+          .toList();
+    }
+
     return BillingPlan(
-      id: json['id'] is int ? json['id'] : int.parse('${json['id']}'),
-      name: json['name'] ?? '',
-      description: json['description'],
-      price: (json['price'] is double ? json['price'] : double.parse('${json['price'] ?? 0}')),
-      interval: json['interval'] ?? 'month',
-      features: (json['features'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-      isCurrent: json['is_current'] == true || json['is_current'] == 1,
+      id: id,
+      name: (json['name'] ?? 'Plan').toString(),
+      description: json['description']?.toString(),
+      price: price,
+      interval: (json['interval'] ?? 'month').toString(),
+      features: features,
+      isCurrent: json['is_current'] == true || json['is_current'] == 1 || json['is_current'] == '1',
     );
   }
 }

@@ -61,9 +61,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
           return true;
         }
       } on DioException catch (e) {
-        // Network error — use cached user as offline fallback
+        // Network error or connection timeout — use cached user as offline fallback
         if (e.type == DioExceptionType.connectionError ||
-            e.type == DioExceptionType.connectionTimeout) {
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout) {
           final cachedUser = await _apiService.getCachedUser();
           if (cachedUser != null) {
             final user = User.fromJson(cachedUser);
@@ -76,8 +78,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
             return true;
           }
         }
-        // Non-network error (401, etc.) — invalid token, clear auth
-        await _apiService.clearAuth();
+        // Only 401 Unauthorized = invalid token → clear auth and force re-login
+        if (e.response?.statusCode == 401) {
+          await _apiService.clearAuth();
+          state = state.copyWith(isLoading: false, isAuthenticated: false);
+          return false;
+        }
+        // For 500/503/other server errors — use cached user if available
+        final cachedUser = await _apiService.getCachedUser();
+        if (cachedUser != null) {
+          final user = User.fromJson(cachedUser);
+          _userNotifier.setUser(user);
+          state = state.copyWith(
+            isLoading: false,
+            isAuthenticated: true,
+            needsLock: true,
+          );
+          return true;
+        }
         state = state.copyWith(isLoading: false, isAuthenticated: false);
         return false;
       }

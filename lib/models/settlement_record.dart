@@ -27,20 +27,29 @@ class SettlementRecord {
     this.staff,
   });
 
+  static double? _toDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is num) return v.toDouble();
+    return double.tryParse('$v');
+  }
+
   factory SettlementRecord.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
+
     return SettlementRecord(
-      id: json['id'] ?? 0,
-      date: json['date'] ?? '',
-      openingBalance: (json['opening_balance'] ?? 0).toDouble(),
-      closingBalance: (json['closing_balance'] ?? 0).toDouble(),
-      cashCollected: (json['cash_collected'] ?? 0).toDouble(),
-      cardCollected: (json['card_collected'] ?? 0).toDouble(),
-      tipsCollected: (json['tips_collected'] ?? 0).toDouble(),
-      expensesTotal: (json['expenses_total'] ?? 0).toDouble(),
-      netTotal: (json['net_total'] ?? 0).toDouble(),
-      discrepancy: (json['discrepancy'] ?? 0).toDouble(),
-      notes: json['notes'],
-      staff: json['staff'] != null ? StaffInfo.fromJson(json['staff']) : null,
+      id: id,
+      date: (json['date'] ?? '').toString(),
+      openingBalance: _toDouble(json['opening_balance']) ?? 0.0,
+      closingBalance: _toDouble(json['closing_balance']) ?? 0.0,
+      cashCollected: _toDouble(json['cash_collected']),
+      cardCollected: _toDouble(json['card_collected']),
+      tipsCollected: _toDouble(json['tips_collected']),
+      expensesTotal: _toDouble(json['expenses_total']),
+      netTotal: _toDouble(json['net_total']),
+      discrepancy: _toDouble(json['discrepancy']),
+      notes: json['notes']?.toString(),
+      staff: json['staff'] is Map ? StaffInfo.fromJson(Map<String, dynamic>.from(json['staff'])) : null,
     );
   }
 }
@@ -52,9 +61,11 @@ class StaffInfo {
   StaffInfo({required this.id, required this.name});
 
   factory StaffInfo.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
     return StaffInfo(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
+      id: id,
+      name: (json['name'] ?? '').toString(),
     );
   }
 }

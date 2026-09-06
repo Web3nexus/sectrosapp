@@ -14,11 +14,16 @@ class TableModel {
   });
 
   factory TableModel.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
+    final rawCap = json['capacity'] ?? json['seats'];
+    final capacity = rawCap is int ? rawCap : (int.tryParse('$rawCap') ?? 0);
+
     return TableModel(
-      id: json['id'],
-      name: json['name'],
-      capacity: json['capacity'] ?? 0,
-      status: json['status'] ?? 'available',
+      id: id,
+      name: (json['name'] ?? 'Table $id').toString(),
+      capacity: capacity,
+      status: (json['status'] ?? 'available').toString(),
       currentOrderId: json['current_order_id']?.toString(),
     );
   }

@@ -18,14 +18,19 @@ class StaffProfile {
   });
 
   factory StaffProfile.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
+    final rawActive = json['is_active'];
+    final isActive = rawActive == null ? true : (rawActive == true || rawActive == 1 || rawActive == '1');
+
     return StaffProfile(
-      id: json['id'] is int ? json['id'] : int.parse('${json['id']}'),
-      name: json['name'] ?? '',
-      email: json['email'],
-      phone: json['phone'],
-      role: json['role'] ?? 'waiter',
-      isActive: json['is_active'] ?? true,
-      avatarUrl: json['avatar_url'],
+      id: id,
+      name: (json['name'] ?? '').toString(),
+      email: json['email']?.toString(),
+      phone: json['phone']?.toString(),
+      role: (json['role'] ?? 'waiter').toString(),
+      isActive: isActive,
+      avatarUrl: json['avatar_url']?.toString(),
     );
   }
 

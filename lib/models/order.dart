@@ -18,15 +18,21 @@ class Order {
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
+    final rawAmount = json['total_amount'] ?? json['total'] ?? 0;
+    final totalAmount = rawAmount is num ? rawAmount.toDouble() : (double.tryParse('$rawAmount') ?? 0.0);
+
     return Order(
-      id: json['id'],
-      tableNumber: json['table']?['name'] ?? json['restaurant_table_id']?.toString(),
-      status: json['status'],
-      kitchenStatus: json['kitchen_status'] ?? 'pending',
-      totalAmount: double.parse(json['total_amount'].toString()),
-      createdAt: json['created_at'],
+      id: id,
+      tableNumber: json['table'] is Map ? json['table']['name']?.toString() : json['restaurant_table_id']?.toString(),
+      status: (json['status'] ?? 'pending').toString(),
+      kitchenStatus: (json['kitchen_status'] ?? 'pending').toString(),
+      totalAmount: totalAmount,
+      createdAt: (json['created_at'] ?? '').toString(),
       items: (json['items'] as List?)
-              ?.map((i) => OrderItem.fromJson(i))
+              ?.whereType<Map>()
+              .map((i) => OrderItem.fromJson(Map<String, dynamic>.from(i)))
               .toList() ??
           [],
     );
@@ -47,11 +53,18 @@ class OrderItem {
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
+    final rawQty = json['quantity'] ?? 1;
+    final quantity = rawQty is int ? rawQty : (int.tryParse('$rawQty') ?? 1);
+    final rawPrice = json['unit_price'] ?? json['price'] ?? 0;
+    final price = rawPrice is num ? rawPrice.toDouble() : (double.tryParse('$rawPrice') ?? 0.0);
+
     return OrderItem(
-      id: json['id'],
-      name: json['menu_item']?['name'] ?? 'Item',
-      quantity: json['quantity'],
-      price: double.parse(json['unit_price'].toString()),
+      id: id,
+      name: (json['menu_item'] is Map ? json['menu_item']['name'] : json['name'] ?? 'Item').toString(),
+      quantity: quantity,
+      price: price,
     );
   }
 }

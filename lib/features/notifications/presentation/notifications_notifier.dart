@@ -47,7 +47,10 @@ class NotificationNotifier extends StateNotifier<NotificationsState> {
       final response = await _api.client.get('/notifications');
       if (response.statusCode == 200) {
         final List<dynamic> data = ApiService.extractList(response.data, 'notifications');
-        final list = data.map((j) => AppNotification.fromJson(j as Map<String, dynamic>)).toList();
+        final list = data
+            .whereType<Map>()
+            .map((j) => AppNotification.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
         int? serverUnread;
         if (response.data is Map && response.data['unread_count'] != null) {
           serverUnread = int.tryParse('${response.data['unread_count']}');

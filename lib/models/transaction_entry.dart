@@ -18,14 +18,17 @@ class TransactionEntry {
   });
 
   factory TransactionEntry.fromJson(Map<String, dynamic> json) {
+    final rawAmount = json['amount'] ?? 0;
+    final amount = rawAmount is num ? rawAmount.toDouble() : (double.tryParse('$rawAmount') ?? 0.0);
+
     return TransactionEntry(
-      id: json['id'] ?? '',
-      type: json['type'] ?? 'income',
-      description: json['description'] ?? '',
-      amount: (json['amount'] ?? 0).toDouble(),
-      date: json['date'] ?? '',
-      category: json['category'] ?? 'Other',
-      status: json['status'] ?? 'paid',
+      id: (json['id'] ?? '').toString(),
+      type: (json['type'] ?? 'income').toString(),
+      description: (json['description'] ?? '').toString(),
+      amount: amount,
+      date: (json['date'] ?? '').toString(),
+      category: (json['category'] ?? 'Other').toString(),
+      status: (json['status'] ?? 'paid').toString(),
     );
   }
 

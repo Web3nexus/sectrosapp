@@ -52,32 +52,61 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
   Future<void> fetchAll({String period = 'all', int page = 1}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final results = await Future.wait([
-        _api.client.get('/finance/overview', queryParameters: {'period': period}),
-        _api.client.get('/finance/transactions', queryParameters: {'page': page}),
-        _api.client.get('/finance/settlements'),
-      ]);
+      FinancialSummary? overview = state.overview;
+      List<TransactionEntry> transactions = state.transactions;
+      Map<String, dynamic>? transactionsMeta = state.transactionsMeta;
+      List<SettlementRecord> settlements = state.settlements;
+      String? firstError;
 
-      final overviewRes = results[0];
-      final txRes = results[1];
-      final settleRes = results[2];
+      // 1. Overview
+      try {
+        final res = await _api.client.get('/finance/overview', queryParameters: {'period': period});
+        if (res.statusCode == 200 && res.data is Map) {
+          overview = FinancialSummary.fromJson(Map<String, dynamic>.from(res.data));
+        }
+      } on DioException catch (e) {
+        firstError ??= ApiError.fromDio(e).message;
+      } catch (_) {}
+
+      // 2. Transactions
+      try {
+        final res = await _api.client.get('/finance/transactions', queryParameters: {'page': page});
+        if (res.statusCode == 200) {
+          final data = ApiService.extractList(res.data);
+          transactions = data
+              .whereType<Map>()
+              .map((e) => TransactionEntry.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+          if (res.data is Map && res.data['meta'] is Map) {
+            transactionsMeta = Map<String, dynamic>.from(res.data['meta']);
+          }
+        }
+      } on DioException catch (e) {
+        firstError ??= ApiError.fromDio(e).message;
+      } catch (_) {}
+
+      // 3. Settlements
+      try {
+        final res = await _api.client.get('/finance/settlements');
+        if (res.statusCode == 200) {
+          final data = ApiService.extractList(res.data);
+          settlements = data
+              .whereType<Map>()
+              .map((e) => SettlementRecord.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+        }
+      } on DioException catch (e) {
+        firstError ??= ApiError.fromDio(e).message;
+      } catch (_) {}
 
       state = state.copyWith(
         isLoading: false,
-        overview: overviewRes.statusCode == 200
-            ? FinancialSummary.fromJson(overviewRes.data)
-            : state.overview,
-        transactions: txRes.statusCode == 200
-            ? (txRes.data['data'] as List?)?.map((e) => TransactionEntry.fromJson(e)).toList() ?? []
-            : state.transactions,
-        transactionsMeta: txRes.statusCode == 200 ? txRes.data['meta'] : state.transactionsMeta,
-        settlements: settleRes.statusCode == 200
-            ? (settleRes.data as List?)?.map((e) => SettlementRecord.fromJson(e)).toList() ?? []
-            : state.settlements,
+        overview: overview,
+        transactions: transactions,
+        transactionsMeta: transactionsMeta,
+        settlements: settlements,
+        error: (overview == null && transactions.isEmpty && settlements.isEmpty) ? firstError : null,
       );
-    } on DioException catch (e) {
-      final err = ApiError.fromDio(e);
-      state = state.copyWith(isLoading: false, error: err.message);
     } catch (_) {
       state = state.copyWith(isLoading: false, error: 'Something went wrong');
     }

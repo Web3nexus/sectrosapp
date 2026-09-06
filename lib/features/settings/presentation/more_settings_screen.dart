@@ -178,7 +178,7 @@ class MoreSettingsScreen extends ConsumerWidget {
                   icon: LucideIcons.shieldCheck,
                   title: 'Security & App Lock',
                   subtitle: 'Biometric unlock and PIN security',
-                  onTap: () => context.go('/lock'),
+                  onTap: () => context.go('/security-settings'),
                   isDark: isDark,
                 ),
               ],

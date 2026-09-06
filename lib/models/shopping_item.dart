@@ -20,17 +20,23 @@ class ShoppingItem {
   });
 
   factory ShoppingItem.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
+    final name = (json['item_name'] ?? json['name'] ?? '').toString();
+    final isPurchased = json['is_purchased'] == true ||
+        json['is_purchased'] == 1 ||
+        json['is_purchased'] == '1' ||
+        json['status'] == 'purchased';
+
     return ShoppingItem(
-      id: json['id'] as int,
-      name: json['name'] as String? ?? '',
+      id: id,
+      name: name,
       notes: json['notes'] as String?,
       unit: json['unit'] as String?,
       quantity: json['quantity'] != null
           ? double.tryParse('${json['quantity']}')
           : null,
-      isPurchased: json['is_purchased'] == true ||
-          json['is_purchased'] == 1 ||
-          json['is_purchased'] == '1',
+      isPurchased: isPurchased,
       addedBy: json['added_by'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)

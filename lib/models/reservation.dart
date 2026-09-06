@@ -46,17 +46,23 @@ class Reservation {
       }
     }
 
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
+
+    final rawGuests = json['party_size'] ?? json['guests'];
+    final guests = rawGuests is int ? rawGuests : (int.tryParse('$rawGuests') ?? 0);
+
     return Reservation(
-      id: json['id'] ?? 0,
-      customerName: json['customer_name'] ?? 'Guest',
-      tableNumber: json['table']?['name'] ?? json['restaurant_table_id']?.toString(),
-      date: json['reservation_date'] ?? dateVal,
-      time: timeVal.isNotEmpty ? timeVal : (json['reservation_time'] ?? ''),
-      guests: json['party_size'] ?? json['guests'] ?? 0,
-      status: json['status'] ?? 'pending',
-      phone: json['phone'] ?? json['customer_phone'],
-      email: json['email'] ?? json['customer_email'],
-      notes: json['notes'] ?? json['special_requests'],
+      id: id,
+      customerName: (json['customer_name'] ?? 'Guest').toString(),
+      tableNumber: json['table'] is Map ? json['table']['name']?.toString() : json['restaurant_table_id']?.toString(),
+      date: (json['reservation_date'] ?? dateVal).toString(),
+      time: timeVal.isNotEmpty ? timeVal : (json['reservation_time'] ?? '').toString(),
+      guests: guests,
+      status: (json['status'] ?? 'pending').toString(),
+      phone: json['phone']?.toString() ?? json['customer_phone']?.toString(),
+      email: json['email']?.toString() ?? json['customer_email']?.toString(),
+      notes: json['notes']?.toString() ?? json['special_requests']?.toString(),
     );
   }
 }

@@ -201,8 +201,19 @@ class _UsageSection extends ConsumerWidget {
             fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.foreground,
           )),
           const SizedBox(height: 16),
-          ...usage.entries.map((e) {
-            final value = e.value is int ? e.value : int.tryParse('${e.value}') ?? 0;
+          ...usage.entries.where((e) => e.key != 'plan_slug' && e.value != null).map((e) {
+            String displayVal;
+            if (e.value is Map) {
+              final m = e.value as Map;
+              final used = m['used'] ?? 0;
+              final limit = m['limit'] ?? 0;
+              displayVal = limit > 0 ? '$used / $limit' : '$used';
+            } else if (e.value is bool) {
+              displayVal = e.value ? 'Yes' : 'No';
+            } else {
+              displayVal = e.value.toString();
+            }
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Row(
@@ -216,7 +227,7 @@ class _UsageSection extends ConsumerWidget {
                       style: TextStyle(fontSize: 13, color: AppColors.mutedForeground),
                     ),
                   ),
-                  Text('$value', style: TextStyle(
+                  Text(displayVal, style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.foreground,
                   )),
                 ],

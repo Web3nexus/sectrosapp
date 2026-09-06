@@ -16,13 +16,15 @@ class AppNotification {
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse('$rawId') ?? 0);
     return AppNotification(
-      id: json['id'] is int ? json['id'] : int.parse('${json['id']}'),
-      title: json['title'] ?? '',
-      message: json['message'] ?? '',
-      type: json['type'],
-      status: json['status'] ?? 'unread',
-      createdAt: json['created_at'] ?? '',
+      id: id,
+      title: (json['title'] ?? 'Notification').toString(),
+      message: (json['message'] ?? '').toString(),
+      type: json['type']?.toString(),
+      status: (json['status'] ?? 'unread').toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
     );
   }
 

@@ -49,7 +49,10 @@ class BillingNotifier extends StateNotifier<BillingState> {
       final response = await _api.client.get('/billing/plans');
       if (response.statusCode == 200) {
         final rawPlans = ApiService.extractList(response.data, 'plans');
-        final plans = rawPlans.map((j) => BillingPlan.fromJson(j as Map<String, dynamic>)).toList();
+        final plans = rawPlans
+            .whereType<Map>()
+            .map((j) => BillingPlan.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
 
         BillingPlan? current;
         Map<String, dynamic>? usage;
