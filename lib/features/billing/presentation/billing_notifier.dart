@@ -48,18 +48,31 @@ class BillingNotifier extends StateNotifier<BillingState> {
     try {
       final response = await _api.client.get('/billing/plans');
       if (response.statusCode == 200) {
-        final data = response.data is Map<String, dynamic>
-            ? response.data as Map<String, dynamic>
-            : <String, dynamic>{};
-        final List<dynamic> plansRaw = data['plans'] is List ? data['plans'] : [];
-        final plans = plansRaw.map((j) => BillingPlan.fromJson(j)).toList();
-        final current = plans.cast<BillingPlan?>().firstWhere(
-          (p) => p!.isCurrent, orElse: () => null,
+        final rawPlans = ApiService.extractList(response.data, 'plans');
+        final plans = rawPlans.map((j) => BillingPlan.fromJson(j as Map<String, dynamic>)).toList();
+
+        BillingPlan? current;
+        Map<String, dynamic>? usage;
+
+        if (response.data is Map) {
+          final data = response.data as Map;
+          if (data['usage'] is Map) {
+            usage = Map<String, dynamic>.from(data['usage'] as Map);
+          }
+          if (data['current_plan'] is Map) {
+            current = BillingPlan.fromJson(Map<String, dynamic>.from(data['current_plan'] as Map));
+          }
+        }
+
+        current ??= plans.cast<BillingPlan?>().firstWhere(
+          (p) => p!.isCurrent,
+          orElse: () => plans.isNotEmpty ? plans.first : null,
         );
+
         state = BillingState(
           plans: plans,
           currentPlan: current,
-          usage: data['usage'] as Map<String, dynamic>?,
+          usage: usage,
           isLoading: false,
         );
       }
@@ -75,7 +88,10 @@ class BillingNotifier extends StateNotifier<BillingState> {
     try {
       final response = await _api.client.post('/billing/upgrade', data: {'plan_id': planId});
       await fetch();
-      return response.data['checkout_url'];
+      if (response.data is Map) {
+        return response.data['checkout_url'] ?? response.data['payment_url'] ?? response.data['message'];
+      }
+      return null;
     } on DioException catch (e) {
       state = state.copyWith(error: ApiError.fromDio(e).message);
       return null;

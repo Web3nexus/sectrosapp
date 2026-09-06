@@ -6,28 +6,32 @@ import '../../../models/notification.dart';
 
 class NotificationsState {
   final List<AppNotification> list;
+  final int? serverUnreadCount;
   final bool isLoading;
   final String? error;
 
   NotificationsState({
     this.list = const [],
+    this.serverUnreadCount,
     this.isLoading = false,
     this.error,
   });
 
   NotificationsState copyWith({
     List<AppNotification>? list,
+    int? serverUnreadCount,
     bool? isLoading,
     String? error,
   }) {
     return NotificationsState(
       list: list ?? this.list,
+      serverUnreadCount: serverUnreadCount ?? this.serverUnreadCount,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
     );
   }
 
-  int get unreadCount => list.where((n) => n.isUnread).length;
+  int get unreadCount => serverUnreadCount ?? list.where((n) => n.isUnread).length;
 }
 
 class NotificationNotifier extends StateNotifier<NotificationsState> {
@@ -42,9 +46,17 @@ class NotificationNotifier extends StateNotifier<NotificationsState> {
     try {
       final response = await _api.client.get('/notifications');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List ? response.data : [];
-        final list = data.map((j) => AppNotification.fromJson(j)).toList();
-        state = state.copyWith(isLoading: false, list: list);
+        final List<dynamic> data = ApiService.extractList(response.data, 'notifications');
+        final list = data.map((j) => AppNotification.fromJson(j as Map<String, dynamic>)).toList();
+        int? serverUnread;
+        if (response.data is Map && response.data['unread_count'] != null) {
+          serverUnread = int.tryParse('${response.data['unread_count']}');
+        }
+        state = state.copyWith(
+          isLoading: false,
+          list: list,
+          serverUnreadCount: serverUnread,
+        );
       }
     } on DioException catch (e) {
       final err = ApiError.fromDio(e);

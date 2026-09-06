@@ -36,7 +36,7 @@ class StaffMessagesNotifier extends StateNotifier<StaffMessagesState> {
     try {
       final response = await _api.client.get('/staff/messages');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List ? response.data : [];
+        final List<dynamic> data = ApiService.extractList(response.data, 'messages');
         final messages = data.map((j) => StaffMessage.fromJson(j)).toList();
         final unread = messages.where((m) => !m.read).length;
         state = state.copyWith(isLoading: false, messages: messages, unreadCount: unread);

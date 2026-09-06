@@ -40,8 +40,8 @@ class StaffNotifier extends StateNotifier<StaffState> {
     try {
       final response = await _api.client.get('/staff');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List ? response.data : [];
-        final staff = data.map((j) => StaffProfile.fromJson(j)).toList();
+        final List<dynamic> data = ApiService.extractList(response.data);
+        final staff = data.map((j) => StaffProfile.fromJson(j as Map<String, dynamic>)).toList();
         state = state.copyWith(isLoading: false, staff: staff);
       }
     } on DioException catch (e) {

@@ -19,6 +19,8 @@ import '../presentation/dashboard_notifier.dart';
 import '../../reservations/presentation/reservation_notifier.dart';
 import '../../reservations/presentation/create_booking_sheet.dart';
 import '../../reservations/presentation/reservation_detail_screen.dart';
+import '../../notifications/presentation/notifications_notifier.dart';
+import '../../procurement/presentation/purchase_list_card.dart';
 
 class HomeDashboard extends ConsumerWidget {
   const HomeDashboard({super.key});
@@ -61,50 +63,115 @@ class HomeDashboard extends ConsumerWidget {
               children: [
                 const SizedBox(height: AppSpacing.s16),
 
-                // Top Bar: Property Brand & Profile
+                // Top Bar: Greeting | Icons | Profile
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _greeting(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            user?.name ?? 'Sectros Hospitality',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.5,
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
                       children: [
-                        Text(
-                          _greeting(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                        // Chat icon
+                        IconButton(
+                          icon: Icon(
+                            LucideIcons.messageSquare,
+                            size: 22,
                             color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
                           ),
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            context.go('/inbox');
+                          },
+                          tooltip: 'Inbox',
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          user?.name ?? 'Sectros Hospitality',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.5,
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        // Notification bell with badge
+                        Builder(builder: (ctx) {
+                          final notifState = ref.watch(notificationsProvider);
+                          final unread = notifState.unreadCount;
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  LucideIcons.bell,
+                                  size: 22,
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
+                                ),
+                                onPressed: () {
+                                  HapticFeedback.selectionClick();
+                                  context.go('/notifications');
+                                },
+                                tooltip: 'Notifications',
+                              ),
+                              if (unread > 0)
+                                Positioned(
+                                  top: 6,
+                                  right: 6,
+                                  child: Container(
+                                    width: 16,
+                                    height: 16,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      unread > 9 ? '9+' : '$unread',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        }),
+                        const SizedBox(width: 4),
+                        // Profile avatar
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            context.go('/profile');
+                          },
+                          child: CircleAvatar(
+                            radius: 20,
+                            backgroundColor: isDark ? AppColors.darkElevated : AppColors.primaryLight,
+                            child: Text(
+                              (user?.name ?? 'S').substring(0, 1).toUpperCase(),
+                              style: TextStyle(
+                                color: isDark ? AppColors.darkPrimaryTeal : AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        context.go('/profile');
-                      },
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: isDark ? AppColors.darkElevated : AppColors.primaryLight,
-                        child: Text(
-                          (user?.name ?? 'S').substring(0, 1).toUpperCase(),
-                          style: TextStyle(
-                            color: isDark ? AppColors.darkPrimaryTeal : AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -381,6 +448,11 @@ class HomeDashboard extends ConsumerWidget {
                     );
                   })),
                 ],
+
+                const SizedBox(height: AppSpacing.s24),
+
+                // Shopping / Purchase List (admin & owner)
+                const PurchaseListCard(),
 
                 const SizedBox(height: AppSpacing.s32),
               ],

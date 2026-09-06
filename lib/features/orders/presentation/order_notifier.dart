@@ -40,7 +40,7 @@ class OrderNotifier extends StateNotifier<OrdersState> {
     try {
       final response = await _apiService.client.get('/orders');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List ? response.data : [];
+        final List<dynamic> data = ApiService.extractList(response.data);
         final orders = data.map((json) => Order.fromJson(json)).toList();
         state = state.copyWith(isLoading: false, orders: orders);
       }

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/staff_dashboard_data.dart';
 import '../../../widgets/common/skeleton_loader.dart';
 import '../../../widgets/common/error_view.dart';
+import '../../notifications/presentation/notifications_notifier.dart';
+import '../../procurement/presentation/purchase_list_card.dart';
 import 'staff_dashboard_notifier.dart';
 
 class StaffDashboardScreen extends ConsumerWidget {
@@ -13,15 +17,66 @@ class StaffDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(staffDashboardProvider);
-    final theme = Theme.of(context);
+    final notifState = ref.watch(notificationsProvider);
+    final unread = notifState.unreadCount;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Dashboard'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('My Dashboard'),
+        centerTitle: false,
+        actions: [
+          // Chat icon
+          IconButton(
+            icon: Icon(LucideIcons.messageSquare, size: 22,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              context.go('/inbox');
+            },
+            tooltip: 'Inbox',
+          ),
+          // Notification bell with badge
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                icon: Icon(LucideIcons.bell, size: 22,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted),
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  context.go('/notifications');
+                },
+                tooltip: 'Notifications',
+              ),
+              if (unread > 0)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    width: 16, height: 16,
+                    decoration: const BoxDecoration(
+                      color: AppColors.error, shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      unread > 9 ? '9+' : '$unread',
+                      style: const TextStyle(
+                        color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: state.isLoading
           ? const Center(child: SkeletonLoader(type: SkeletonType.card))
           : state.error != null
               ? ErrorView(message: state.error!, onRetry: () => ref.read(staffDashboardProvider.notifier).fetch())
-              : _buildContent(context, ref, state.data!, theme),
+              : _buildContent(context, ref, state.data!, Theme.of(context)),
     );
   }
 
@@ -56,7 +111,11 @@ class StaffDashboardScreen extends ConsumerWidget {
             _SectionHeader(icon: LucideIcons.wallet, title: 'Payroll History', theme: theme),
             const SizedBox(height: 8),
             ...data.payroll.map((p) => _PayrollTile(payroll: p, theme: theme)),
+            const SizedBox(height: 16),
           ],
+          // Shopping / Purchase List (chef can view & add items)
+          const PurchaseListCard(),
+          const SizedBox(height: 32),
         ],
       ),
     );

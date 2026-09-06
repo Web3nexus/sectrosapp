@@ -39,13 +39,16 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await _apiService.client.get('/customers');
-      if (response.statusCode == 200 && response.data is List) {
-        final list = (response.data as List).map((j) => Customer.fromJson(j)).toList();
-        state = state.copyWith(isLoading: false, customers: list);
-        return;
+      if (response.statusCode == 200) {
+        final rawList = ApiService.extractList(response.data);
+        if (rawList.isNotEmpty) {
+          final list = rawList.map((j) => Customer.fromJson(j as Map<String, dynamic>)).toList();
+          state = state.copyWith(isLoading: false, customers: list);
+          return;
+        }
       }
     } catch (_) {
-      // If endpoint does not exist, derive customers from reservations list
+      // Fallback: derive customers from reservations list
     }
 
     // Fallback: derive unique customers from reservations

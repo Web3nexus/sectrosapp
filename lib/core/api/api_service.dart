@@ -92,4 +92,34 @@ class ApiService {
     } catch (_) {}
     await clearAuth();
   }
+
+  /// Safely extracts a List from API responses, supporting plain lists,
+  /// paginated Laravel responses ({ "data": [...] }), and custom keys.
+  static List<dynamic> extractList(dynamic responseData, [String? preferredKey]) {
+    if (responseData == null) return [];
+    if (responseData is List) return responseData;
+
+    if (responseData is Map) {
+      if (preferredKey != null && responseData[preferredKey] is List) {
+        return responseData[preferredKey] as List;
+      }
+      if (responseData['data'] is List) {
+        return responseData['data'] as List;
+      }
+      if (responseData['notifications'] is List) {
+        return responseData['notifications'] as List;
+      }
+      if (responseData['items'] is List) {
+        return responseData['items'] as List;
+      }
+      if (responseData['plans'] is List) {
+        return responseData['plans'] as List;
+      }
+      if (responseData['lists'] is List) {
+        return responseData['lists'] as List;
+      }
+    }
+    return [];
+  }
 }
+

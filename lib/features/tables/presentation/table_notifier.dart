@@ -40,8 +40,8 @@ class TableNotifier extends StateNotifier<TablesState> {
     try {
       final response = await _apiService.client.get('/tables');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List ? response.data : [];
-        final tables = data.map((json) => TableModel.fromJson(json)).toList();
+        final List<dynamic> data = ApiService.extractList(response.data);
+        final tables = data.map((json) => TableModel.fromJson(json as Map<String, dynamic>)).toList();
         state = state.copyWith(isLoading: false, tables: tables);
       }
     } on DioException catch (e) {
