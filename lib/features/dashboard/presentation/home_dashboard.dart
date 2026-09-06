@@ -3,12 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'dashboard_notifier.dart';
+import 'package:intl/intl.dart';
+
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../models/user.dart';
 import '../../../widgets/common/skeleton_loader.dart';
-import '../../../widgets/common/animations.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../widgets/common/empty_state.dart';
+import '../../../widgets/design_system/app_card.dart';
+import '../../../widgets/design_system/metric_card.dart';
+import '../../../widgets/design_system/reservation_card.dart';
+import '../../../widgets/design_system/app_button.dart';
 import '../../../widgets/main_layout.dart';
+import '../presentation/dashboard_notifier.dart';
+import '../../reservations/presentation/reservation_notifier.dart';
+import '../../reservations/presentation/create_booking_sheet.dart';
+import '../../reservations/presentation/reservation_detail_screen.dart';
 
 class HomeDashboard extends ConsumerWidget {
   const HomeDashboard({super.key});
@@ -17,117 +27,365 @@ class HomeDashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardState = ref.watch(dashboardProvider);
     final user = ref.watch(userProvider);
+    final reservationState = ref.watch(reservationsProvider);
     final metrics = dashboardState.metrics;
     final isLoading = dashboardState.isLoading;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        HapticFeedback.mediumImpact();
-        await ref.read(dashboardProvider.notifier).fetchStats();
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 60),
-            // Header with greeting
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final today = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(today);
+    final todayDisplay = DateFormat('EEEE, MMM d').format(today);
+
+    // Filter today's reservations
+    final todayReservations = reservationState.reservations.where((res) {
+      return res.date.startsWith(todayStr);
+    }).toList();
+
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () async {
+            HapticFeedback.mediumImpact();
+            await Future.wait([
+              ref.read(dashboardProvider.notifier).fetchStats(),
+              ref.read(reservationsProvider.notifier).fetchReservations(),
+            ]);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: AppSpacing.s16),
+
+                // Top Bar: Property Brand & Profile
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      _greeting(),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.mutedForeground,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _greeting(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user?.name ?? 'Sectros Hospitality',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      user?.name ?? 'Welcome!',
-                      style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        context.go('/profile');
+                      },
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: isDark ? AppColors.darkElevated : AppColors.primaryLight,
+                        child: Text(
+                          (user?.name ?? 'S').substring(0, 1).toUpperCase(),
+                          style: TextStyle(
+                            color: isDark ? AppColors.darkPrimaryTeal : AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    context.go('/profile');
-                  },
-                  child: CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.primary,
-                    child: Text(
-                      (user?.name ?? 'U').substring(0, 2).toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
+
+                const SizedBox(height: AppSpacing.s16),
+
+                // Dark Navy Contextual Property Header Card
+                AppNavyCard(
+                  padding: const EdgeInsets.all(AppSpacing.s20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.success,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.s8),
+                              Text(
+                                todayDisplay.toUpperCase(),
+                                style: const TextStyle(
+                                  color: AppColors.navyCardTextMuted,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${todayReservations.length} today',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.s16),
+                      Text(
+                        'Hospitality Operations',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.s4),
+                      Text(
+                        'Overview & Availability',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.s16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _NavyStatItem(
+                              label: 'Today Bookings',
+                              value: '${todayReservations.length}',
+                              icon: LucideIcons.calendar,
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 32,
+                            color: Colors.white.withValues(alpha: 0.15),
+                          ),
+                          Expanded(
+                            child: _NavyStatItem(
+                              label: 'Active Guests',
+                              value: '${todayReservations.fold<int>(0, (sum, r) => sum + r.guests)}',
+                              icon: LucideIcons.users,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
+
+                const SizedBox(height: AppSpacing.s20),
+
+                // Metrics Grid (2x2)
+                if (isLoading && metrics['total_revenue'] == 0)
+                  const SkeletonLoader(type: SkeletonType.grid, itemCount: 4)
+                else
+                  Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: MetricCard(
+                              title: 'Revenue',
+                              value: '\$${(metrics['total_revenue']?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                              trend: '+12.5%',
+                              isPositiveTrend: true,
+                              icon: LucideIcons.dollarSign,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.s12),
+                          Expanded(
+                            child: MetricCard(
+                              title: 'Bookings',
+                              value: '${metrics['active_reservations'] ?? reservationState.reservations.length}',
+                              subtitle: 'Active total',
+                              icon: LucideIcons.bookOpen,
+                              onTap: () {
+                                ref.read(navigationIndexProvider.notifier).state = 2;
+                                context.go('/reservations');
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.s12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: MetricCard(
+                              title: 'Avg Order',
+                              value: '\$${(metrics['aov']?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                              subtitle: 'Per table',
+                              icon: LucideIcons.shoppingBag,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.s12),
+                          Expanded(
+                            child: MetricCard(
+                              title: 'Net Profit',
+                              value: '\$${(metrics['net_profit']?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                              trend: '+8.2%',
+                              isPositiveTrend: true,
+                              icon: LucideIcons.trendingUp,
+                              onTap: () => context.go('/finance'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                const SizedBox(height: AppSpacing.s24),
+
+                // Quick Action Bar
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        label: 'New Booking',
+                        icon: LucideIcons.calendarPlus,
+                        size: AppButtonSize.md,
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          CreateBookingSheet.show(context);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s12),
+                    AppIconButton(
+                      icon: LucideIcons.layoutGrid,
+                      tooltip: 'Floor Plan',
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        context.go('/tables');
+                      },
+                    ),
+                    const SizedBox(width: AppSpacing.s8),
+                    AppIconButton(
+                      icon: LucideIcons.userPlus,
+                      tooltip: 'Customers',
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(navigationIndexProvider.notifier).state = 3;
+                        context.go('/customers');
+                      },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AppSpacing.s28),
+
+                // Today's Reservations Section Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Today's Reservations",
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        ref.read(navigationIndexProvider.notifier).state = 2;
+                        context.go('/reservations');
+                      },
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        child: Row(
+                          children: [
+                            Text(
+                              'View all',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.darkPrimaryTeal : AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Icon(
+                              LucideIcons.chevronRight,
+                              size: 14,
+                              color: isDark ? AppColors.darkPrimaryTeal : AppColors.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AppSpacing.s12),
+
+                // Today's Reservation List
+                if (reservationState.isLoading && reservationState.reservations.isEmpty)
+                  const SkeletonLoader(type: SkeletonType.reservation, itemCount: 3)
+                else if (todayReservations.isEmpty && reservationState.reservations.isEmpty)
+                  const EmptyState(
+                    icon: LucideIcons.calendarCheck,
+                    title: 'No bookings today',
+                    subtitle: 'Create a new reservation to get started',
+                  )
+                else ...[
+                  // Show today's or fallback to latest upcoming
+                  ...((todayReservations.isNotEmpty ? todayReservations : reservationState.reservations.take(4))
+                      .map((res) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.s10),
+                      child: ReservationCard(
+                        reservation: res,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ReservationDetailScreen(reservation: res),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  })),
+                ],
+
+                const SizedBox(height: AppSpacing.s32),
               ],
             ),
-            const SizedBox(height: 28),
-            // Stats row — WhatsApp-style status bubbles
-            if (isLoading && metrics['total_revenue'] == 0)
-              const SkeletonLoader(type: SkeletonType.grid, itemCount: 2)
-            else
-              _buildStatsRow(context, metrics),
-            const SizedBox(height: 28),
-            // Quick Actions
-            Text(
-              'Quick Actions',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                _QuickAction(
-                  label: 'New Order',
-                  icon: LucideIcons.plusCircle,
-                  color: AppColors.primary,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    ref.read(navigationIndexProvider.notifier).state = 1;
-                    context.go('/orders');
-                  },
-                ),
-                const SizedBox(width: 12),
-                _QuickAction(
-                  label: 'Reservation',
-                  icon: LucideIcons.calendarPlus,
-                  color: AppColors.secondary,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    ref.read(navigationIndexProvider.notifier).state = 3;
-                    context.go('/reservations');
-                  },
-                ),
-                const SizedBox(width: 12),
-                _QuickAction(
-                  label: 'Staff',
-                  icon: LucideIcons.users,
-                  color: AppColors.accent,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    ref.read(navigationIndexProvider.notifier).state = -1;
-                    context.go('/staff');
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 120),
-          ],
+          ),
         ),
       ),
     );
@@ -139,204 +397,48 @@ class HomeDashboard extends ConsumerWidget {
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   }
+}
 
-  Widget _buildStatsRow(BuildContext context, Map<String, dynamic> metrics) {
-    return Column(
+class _NavyStatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _NavyStatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Row(
+        Icon(icon, size: 16, color: AppColors.navyCardTextMuted),
+        const SizedBox(width: AppSpacing.s8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _MetricBubble(
-                value: metrics['total_revenue']?.toDouble() ?? 0,
-                label: 'Revenue',
-                prefix: '\$',
-                icon: LucideIcons.dollarSign,
-                color: AppColors.primary,
-                gradientColors: [AppColors.primary, AppColors.primaryDark],
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _MetricBubble(
-                value: metrics['active_reservations']?.toDouble() ?? 0,
-                label: 'Bookings',
-                icon: LucideIcons.calendar,
-                color: AppColors.success,
-                gradientColors: [AppColors.success, const Color(0xFF28A745)],
-                decimals: 0,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _MetricBubble(
-                value: metrics['aov']?.toDouble() ?? 0,
-                label: 'Avg Order',
-                prefix: '\$',
-                icon: LucideIcons.shoppingBag,
-                color: AppColors.accent,
-                gradientColors: [AppColors.accent, const Color(0xFFE08500)],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _MetricBubble(
-                value: metrics['net_profit']?.toDouble() ?? 0,
-                label: 'Net Profit',
-                prefix: '\$',
-                icon: LucideIcons.trendingUp,
-                color: AppColors.secondary,
-                gradientColors: [AppColors.secondary, const Color(0xFF4A48C0)],
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.navyCardTextMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _MetricBubble extends StatelessWidget {
-  final double value;
-  final String label;
-  final String prefix;
-  final IconData icon;
-  final Color color;
-  final List<Color> gradientColors;
-  final int decimals;
-
-  const _MetricBubble({
-    required this.value,
-    required this.label,
-    this.prefix = '',
-    required this.icon,
-    required this.color,
-    required this.gradientColors,
-    this.decimals = 0,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: color.withValues(alpha: 0.1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: gradientColors,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AnimatedCounter(
-                  targetValue: value,
-                  prefix: prefix,
-                  decimals: decimals,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.mutedForeground,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickAction({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color,
-                color.withValues(alpha: 0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: Colors.white, size: 22),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

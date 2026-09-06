@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_spacing.dart';
+
+enum SkeletonType { card, listTile, grid, metric, reservation }
 
 class SkeletonLoader extends StatelessWidget {
   final int itemCount;
@@ -14,8 +18,8 @@ class SkeletonLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0);
-    final highlightColor = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF5F5F5);
+    final baseColor = isDark ? AppColors.darkElevated : AppColors.secondaryBackground;
+    final highlightColor = isDark ? AppColors.darkBorder : AppColors.surface;
 
     return Shimmer.fromColors(
       baseColor: baseColor,
@@ -31,49 +35,64 @@ class SkeletonLoader extends StatelessWidget {
   }
 
   Widget _buildItem(BuildContext context, bool isDark) {
-    final shimmerColor = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final shimmerColor = isDark ? AppColors.darkElevated : AppColors.surface;
+
     switch (type) {
       case SkeletonType.card:
         return Padding(
-          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
+          padding: const EdgeInsets.only(left: AppSpacing.pagePadding, right: AppSpacing.pagePadding, bottom: AppSpacing.s12),
           child: Container(
-            height: 120,
+            height: 90,
             decoration: BoxDecoration(
               color: shimmerColor,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: AppRadius.lgBorderRadius,
+            ),
+          ),
+        );
+      case SkeletonType.reservation:
+        return Padding(
+          padding: const EdgeInsets.only(left: AppSpacing.pagePadding, right: AppSpacing.pagePadding, bottom: AppSpacing.s10),
+          child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              color: shimmerColor,
+              borderRadius: AppRadius.lgBorderRadius,
             ),
           ),
         );
       case SkeletonType.listTile:
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding, vertical: AppSpacing.s8),
           child: Row(
             children: [
               Container(
-                width: 48, height: 48,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: shimmerColor,
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      height: 14, width: double.infinity,
+                      height: 14,
+                      width: double.infinity,
                       decoration: BoxDecoration(
                         color: shimmerColor,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.s6),
                     Container(
-                      height: 10, width: 140,
+                      height: 10,
+                      width: 120,
                       decoration: BoxDecoration(
                         color: shimmerColor,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
                       ),
                     ),
                   ],
@@ -83,16 +102,17 @@ class SkeletonLoader extends StatelessWidget {
           ),
         );
       case SkeletonType.grid:
+      case SkeletonType.metric:
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding, vertical: AppSpacing.s6),
           child: Row(
             children: List.generate(2, (i) => Expanded(
               child: Container(
-                height: 140,
-                margin: EdgeInsets.only(right: i == 0 ? 8 : 0, left: i == 1 ? 8 : 0),
+                height: 96,
+                margin: EdgeInsets.only(right: i == 0 ? AppSpacing.s8 : 0, left: i == 1 ? AppSpacing.s8 : 0),
                 decoration: BoxDecoration(
                   color: shimmerColor,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: AppRadius.lgBorderRadius,
                 ),
               ),
             )),
@@ -101,5 +121,3 @@ class SkeletonLoader extends StatelessWidget {
     }
   }
 }
-
-enum SkeletonType { card, listTile, grid }

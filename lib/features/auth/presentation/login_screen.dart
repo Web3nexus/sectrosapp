@@ -30,7 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _passwordController.text,
     );
     if (success && mounted) {
-      context.go('/dashboard');
+      context.go('/lock');
     }
   }
 

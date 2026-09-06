@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'reservation_notifier.dart';
-import '../../../models/reservation.dart';
+
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../widgets/common/skeleton_loader.dart';
 import '../../../widgets/common/empty_state.dart';
 import '../../../widgets/common/error_view.dart';
-import '../../../widgets/common/animations.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../widgets/design_system/app_search_input.dart';
+import '../../../widgets/design_system/filter_bar.dart';
+import '../../../widgets/design_system/reservation_card.dart';
+import '../../../widgets/design_system/app_button.dart';
+import 'reservation_notifier.dart';
+import 'create_booking_sheet.dart';
+import 'reservation_detail_screen.dart';
 
 class ReservationsScreen extends ConsumerStatefulWidget {
   const ReservationsScreen({super.key});
@@ -17,439 +24,171 @@ class ReservationsScreen extends ConsumerStatefulWidget {
 }
 
 class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
-  void _showAddReservationSheet() {
-    final nameCtl = TextEditingController();
-    final emailCtl = TextEditingController();
-    final phoneCtl = TextEditingController();
-    final guestsCtl = TextEditingController(text: '2');
-    final notesCtl = TextEditingController();
-    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
-    TimeOfDay selectedTime = const TimeOfDay(hour: 19, minute: 0);
+  String _selectedFilter = 'all';
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Container(
-          decoration: BoxDecoration(
-            color: Theme.of(ctx).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          padding: EdgeInsets.only(
-            left: 24, right: 24, top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text('Add Reservation',
-                  style: Theme.of(ctx).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Customer name
-                TextField(
-                  controller: nameCtl,
-                  decoration: InputDecoration(
-                    labelText: 'Customer Name *',
-                    prefixIcon: const Icon(LucideIcons.user, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: emailCtl,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email *',
-                    prefixIcon: const Icon(LucideIcons.mail, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: phoneCtl,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Phone *',
-                    prefixIcon: const Icon(LucideIcons.phone, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: guestsCtl,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Number of Guests *',
-                    prefixIcon: const Icon(LucideIcons.users, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                // Date picker
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: ctx,
-                      initialDate: selectedDate,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) setModalState(() => selectedDate = picked);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.border),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(LucideIcons.calendar, size: 20, color: AppColors.mutedForeground),
-                        const SizedBox(width: 12),
-                        Text(
-                          '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                          style: Theme.of(ctx).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                // Time picker
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showTimePicker(
-                      context: ctx,
-                      initialTime: selectedTime,
-                    );
-                    if (picked != null) setModalState(() => selectedTime = picked);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.border),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(LucideIcons.clock, size: 20, color: AppColors.mutedForeground),
-                        const SizedBox(width: 12),
-                        Text(
-                          selectedTime.format(ctx),
-                          style: Theme.of(ctx).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: notesCtl,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: 'Special Requests',
-                    prefixIcon: const Icon(LucideIcons.fileText, size: 20),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      if (nameCtl.text.isEmpty || emailCtl.text.isEmpty || phoneCtl.text.isEmpty) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          const SnackBar(content: Text('Please fill in all required fields')),
-                        );
-                        return;
-                      }
-
-                      final dt = DateTime(
-                        selectedDate.year, selectedDate.month, selectedDate.day,
-                        selectedTime.hour, selectedTime.minute,
-                      );
-                      final isoTime = dt.toIso8601String();
-
-                      final err = await ref.read(reservationsProvider.notifier).createReservation({
-                        'customer_name': nameCtl.text.trim(),
-                        'customer_email': emailCtl.text.trim(),
-                        'customer_phone': phoneCtl.text.trim(),
-                        'party_size': int.tryParse(guestsCtl.text) ?? 2,
-                        'reservation_time': isoTime,
-                        'special_requests': notesCtl.text.trim(),
-                        'source': 'app',
-                      });
-
-                      if (!ctx.mounted) return;
-                      Navigator.pop(ctx);
-
-                      if (err != null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(err), backgroundColor: AppColors.destructive),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Reservation created!'), backgroundColor: AppColors.success),
-                        );
-                      }
-                    },
-                    icon: const Icon(LucideIcons.calendarCheck, size: 18),
-                    label: const Text('Create Reservation'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final resState = ref.watch(reservationsProvider);
 
+    // Compute filter counts
+    final allList = resState.reservations;
+    final confirmedCount = allList.where((r) => r.status.toLowerCase().contains('confirm') || r.status.toLowerCase() == 'active').length;
+    final pendingCount = allList.where((r) => r.status.toLowerCase().contains('pend') || r.status.toLowerCase() == 'waiting').length;
+    final arrivedCount = allList.where((r) => r.status.toLowerCase() == 'arrived' || r.status.toLowerCase() == 'seated').length;
+    final cancelledCount = allList.where((r) => r.status.toLowerCase().contains('cancel')).length;
+
+    final filterItems = [
+      FilterItem(key: 'all', label: 'All Bookings', count: allList.length),
+      FilterItem(key: 'confirmed', label: 'Confirmed', count: confirmedCount),
+      FilterItem(key: 'pending', label: 'Pending', count: pendingCount),
+      FilterItem(key: 'seated', label: 'Seated', count: arrivedCount),
+      FilterItem(key: 'cancelled', label: 'Cancelled', count: cancelledCount),
+    ];
+
+    // Filter and search
+    final filteredReservations = allList.where((res) {
+      // Filter by status
+      if (_selectedFilter != 'all') {
+        final st = res.status.toLowerCase();
+        if (_selectedFilter == 'confirmed' && !st.contains('confirm') && st != 'active') return false;
+        if (_selectedFilter == 'pending' && !st.contains('pend') && st != 'waiting') return false;
+        if (_selectedFilter == 'seated' && st != 'arrived' && st != 'seated') return false;
+        if (_selectedFilter == 'cancelled' && !st.contains('cancel')) return false;
+      }
+
+      // Search query
+      if (_searchQuery.isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        final nameMatch = res.customerName.toLowerCase().contains(q);
+        final idMatch = '#${res.id}'.contains(q);
+        final phoneMatch = (res.phone ?? '').toLowerCase().contains(q);
+        if (!nameMatch && !idMatch && !phoneMatch) return false;
+      }
+
+      return true;
+    }).toList();
+
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
-        title: Text(
-          'Reservations',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: const Text('Bookings'),
         actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.calendarPlus, size: 20),
+          AppIconButton(
+            icon: LucideIcons.calendarPlus,
             tooltip: 'Add Reservation',
-            onPressed: _showAddReservationSheet,
+            hasBorder: false,
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              CreateBookingSheet.show(context);
+            },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
         ],
       ),
-      body: _buildBody(context, resState),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddReservationSheet,
-        icon: const Icon(LucideIcons.plus, size: 20),
-        label: const Text('Add Reservation'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: () async {
+          HapticFeedback.mediumImpact();
+          await ref.read(reservationsProvider.notifier).fetchReservations();
+        },
+        child: Column(
+          children: [
+            const SizedBox(height: AppSpacing.s8),
+            // Search Input
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
+              child: AppSearchInput(
+                controller: _searchController,
+                hintText: 'Search guest name, phone, booking ID...',
+                onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                onClear: () => setState(() => _searchQuery = ''),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s12),
+
+            // Status Filter Bar
+            FilterBar(
+              items: filterItems,
+              selectedKey: _selectedFilter,
+              onSelected: (key) {
+                HapticFeedback.selectionClick();
+                setState(() => _selectedFilter = key);
+              },
+            ),
+            const SizedBox(height: AppSpacing.s12),
+
+            // List or Skeletons / Empty
+            Expanded(
+              child: _buildList(resState, filteredReservations),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, ReservationsState state) {
+  Widget _buildList(ReservationsState state, List<dynamic> filtered) {
     if (state.isLoading && state.reservations.isEmpty) {
-      return const SkeletonLoader(type: SkeletonType.listTile, itemCount: 6);
+      return const Padding(
+        padding: EdgeInsets.all(AppSpacing.pagePadding),
+        child: SkeletonLoader(type: SkeletonType.reservation, itemCount: 6),
+      );
     }
     if (state.error != null && state.reservations.isEmpty) {
-      return ErrorView(
-        message: state.error!,
-        onRetry: () => ref.read(reservationsProvider.notifier).fetchReservations(),
+      return Center(
+        child: ErrorView(
+          message: state.error!,
+          onRetry: () => ref.read(reservationsProvider.notifier).fetchReservations(),
+        ),
       );
     }
-    if (state.reservations.isEmpty) {
-      return const EmptyState(
-        icon: LucideIcons.calendarCheck,
-        title: 'No reservations',
-        subtitle: 'New bookings will appear here',
+    if (filtered.isEmpty) {
+      return Center(
+        child: EmptyState(
+          icon: LucideIcons.calendarCheck,
+          title: _searchQuery.isNotEmpty ? 'No bookings found' : 'No reservations',
+          subtitle: _searchQuery.isNotEmpty
+              ? 'Try changing your search terms or filter'
+              : 'Add your first guest reservation to manage it here',
+          actionLabel: _searchQuery.isEmpty ? 'New Reservation' : null,
+          onAction: _searchQuery.isEmpty
+              ? () {
+                  HapticFeedback.lightImpact();
+                  CreateBookingSheet.show(context);
+                }
+              : null,
+        ),
       );
     }
+
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
-      itemCount: state.reservations.length,
+      padding: const EdgeInsets.fromLTRB(AppSpacing.pagePadding, 0, AppSpacing.pagePadding, 100),
+      itemCount: filtered.length,
       itemBuilder: (context, index) {
-        final res = state.reservations[index];
-        return AnimatedListItem(
-          index: index,
-          child: _ReservationTimelineTile(
+        final res = filtered[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.s10),
+          child: ReservationCard(
             reservation: res,
-            isFirst: index == 0,
-            isLast: index == state.reservations.length - 1,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ReservationDetailScreen(reservation: res),
+                ),
+              );
+            },
           ),
         );
       },
-    );
-  }
-}
-
-class _ReservationTimelineTile extends StatelessWidget {
-  final Reservation reservation;
-  final bool isFirst;
-  final bool isLast;
-
-  const _ReservationTimelineTile({
-    required this.reservation,
-    required this.isFirst,
-    required this.isLast,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    Color statusColor;
-    IconData statusIcon;
-    switch (reservation.status) {
-      case 'confirmed':
-        statusColor = AppColors.success;
-        statusIcon = LucideIcons.checkCircle;
-        break;
-      case 'arrived':
-        statusColor = AppColors.primary;
-        statusIcon = LucideIcons.userCheck;
-        break;
-      case 'cancelled':
-        statusColor = AppColors.destructive;
-        statusIcon = LucideIcons.xCircle;
-        break;
-      default:
-        statusColor = AppColors.accent;
-        statusIcon = LucideIcons.clock;
-    }
-
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Timeline bar
-          SizedBox(
-            width: 32,
-            child: Column(
-              children: [
-                if (!isFirst)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      color: AppColors.border.withValues(alpha: 0.5),
-                    ),
-                  )
-                else
-                  const Spacer(),
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: statusColor.withValues(alpha: 0.2),
-                      width: 3,
-                    ),
-                  ),
-                ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      color: AppColors.border.withValues(alpha: 0.5),
-                    ),
-                  )
-                else
-                  const Spacer(),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Card
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : AppColors.card,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: statusColor.withValues(alpha: 0.08),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(statusIcon, color: statusColor, size: 20),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          reservation.customerName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(LucideIcons.clock, size: 12, color: AppColors.mutedForeground),
-                            const SizedBox(width: 4),
-                            Text(
-                              reservation.time.length >= 5
-                                  ? reservation.time.substring(0, 5)
-                                  : reservation.time,
-                              style: TextStyle(fontSize: 12, color: AppColors.mutedForeground),
-                            ),
-                            const SizedBox(width: 12),
-                            Icon(LucideIcons.users, size: 12, color: AppColors.mutedForeground),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${reservation.guests}',
-                              style: TextStyle(fontSize: 12, color: AppColors.mutedForeground),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      reservation.status.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: statusColor,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/splash_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
+import 'features/auth/presentation/lock_screen.dart';
+import 'core/services/biometric_service.dart';
 import 'features/dashboard/presentation/home_dashboard.dart';
 import 'features/orders/presentation/orders_screen.dart';
 import 'widgets/main_layout.dart';
@@ -20,6 +22,9 @@ import 'features/notifications/presentation/notifications_screen.dart';
 import 'features/inbox/presentation/inbox_screen.dart';
 import 'features/finance/presentation/finance_screen.dart';
 import 'features/billing/presentation/billing_screen.dart';
+import 'features/calendar/presentation/calendar_screen.dart';
+import 'features/customers/presentation/customers_screen.dart';
+import 'features/settings/presentation/more_settings_screen.dart';
 import 'models/user.dart';
 
 final _router = GoRouter(
@@ -27,16 +32,17 @@ final _router = GoRouter(
   redirect: (context, state) {
     final container = ProviderScope.containerOf(context);
     final user = container.read(userProvider);
-    final isLoggingIn = state.matchedLocation == '/login' ||
+    final isAuthRoute = state.matchedLocation == '/login' ||
         state.matchedLocation == '/register' ||
         state.matchedLocation == '/forgot-password' ||
-        state.matchedLocation == '/';
+        state.matchedLocation == '/' ||
+        state.matchedLocation == '/lock';
 
-    if (user == null && !isLoggingIn) {
+    if (user == null && !isAuthRoute) {
       return '/login';
     }
 
-    if (user != null && isLoggingIn && state.matchedLocation != '/') {
+    if (user != null && isAuthRoute && state.matchedLocation != '/' && state.matchedLocation != '/lock') {
       return '/dashboard';
     }
 
@@ -59,8 +65,12 @@ final _router = GoRouter(
       path: '/forgot-password',
       builder: (context, state) => const ForgotPasswordScreen(),
     ),
+    GoRoute(
+      path: '/lock',
+      builder: (context, state) => const LockScreen(),
+    ),
     ShellRoute(
-      builder: (context, state, child) => MainLayout(child: child),
+      builder: (context, state, child) => MainLayout(child: _LockAwareShell(child: child)),
       routes: [
         GoRoute(
           path: '/dashboard',
@@ -110,6 +120,18 @@ final _router = GoRouter(
           builder: (context, state) => const StaffScreen(),
         ),
         GoRoute(
+          path: '/calendar',
+          builder: (context, state) => const CalendarScreen(),
+        ),
+        GoRoute(
+          path: '/customers',
+          builder: (context, state) => const CustomersScreen(),
+        ),
+        GoRoute(
+          path: '/more',
+          builder: (context, state) => const MoreSettingsScreen(),
+        ),
+        GoRoute(
           path: '/billing',
           builder: (context, state) => const BillingScreen(),
         ),
@@ -117,6 +139,62 @@ final _router = GoRouter(
     ),
   ],
 );
+
+class _LockAwareShell extends ConsumerStatefulWidget {
+  final Widget child;
+  const _LockAwareShell({required this.child});
+
+  @override
+  ConsumerState<_LockAwareShell> createState() => _LockAwareShellState();
+}
+
+class _LockAwareShellState extends ConsumerState<_LockAwareShell>
+    with WidgetsBindingObserver {
+  bool _locked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      setState(() => _locked = true);
+    }
+    if (state == AppLifecycleState.resumed && _locked) {
+      _showLockScreen();
+    }
+  }
+
+  void _showLockScreen() {
+    final bio = ref.read(biometricServiceProvider);
+    bio.isLockEnabled().then((enabled) {
+      if (enabled && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const LockScreen(),
+            fullscreenDialog: true,
+          ),
+        ).then((_) {
+          if (mounted) setState(() => _locked = false);
+        });
+      } else {
+        if (mounted) setState(() => _locked = false);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
 
 void main() {
   final binding = WidgetsFlutterBinding.ensureInitialized();

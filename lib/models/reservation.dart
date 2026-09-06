@@ -6,6 +6,9 @@ class Reservation {
   final String time;
   final int guests;
   final String status; // confirmed, pending, cancelled, arrived
+  final String? phone;
+  final String? email;
+  final String? notes;
 
   Reservation({
     required this.id,
@@ -15,6 +18,9 @@ class Reservation {
     required this.time,
     required this.guests,
     required this.status,
+    this.phone,
+    this.email,
+    this.notes,
   });
 
   factory Reservation.fromJson(Map<String, dynamic> json) {
@@ -48,6 +54,9 @@ class Reservation {
       time: timeVal.isNotEmpty ? timeVal : (json['reservation_time'] ?? ''),
       guests: json['party_size'] ?? json['guests'] ?? 0,
       status: json['status'] ?? 'pending',
+      phone: json['phone'] ?? json['customer_phone'],
+      email: json['email'] ?? json['customer_email'],
+      notes: json['notes'] ?? json['special_requests'],
     );
   }
 }

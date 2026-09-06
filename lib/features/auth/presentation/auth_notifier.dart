@@ -7,22 +7,26 @@ class AuthState {
   final bool isLoading;
   final String? error;
   final bool isAuthenticated;
+  final bool needsLock;
 
   AuthState({
     this.isLoading = false,
     this.error,
     this.isAuthenticated = false,
+    this.needsLock = false,
   });
 
   AuthState copyWith({
     bool? isLoading,
     String? error,
     bool? isAuthenticated,
+    bool? needsLock,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      needsLock: needsLock ?? this.needsLock,
     );
   }
 }
@@ -42,22 +46,48 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       }
 
-      final response = await _apiService.client.get('/user');
-      if (response.statusCode == 200) {
-        final user = User.fromJson(response.data);
-        _userNotifier.setUser(user);
-        state = state.copyWith(isLoading: false, isAuthenticated: true);
-        return true;
+      // Validate the token by calling /user
+      try {
+        final response = await _apiService.client.get('/user');
+        if (response.statusCode == 200) {
+          final user = User.fromJson(response.data);
+          await _apiService.saveCachedUser(response.data);
+          _userNotifier.setUser(user);
+          state = state.copyWith(
+            isLoading: false,
+            isAuthenticated: true,
+            needsLock: true,
+          );
+          return true;
+        }
+      } on DioException catch (e) {
+        // Network error — use cached user as offline fallback
+        if (e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout) {
+          final cachedUser = await _apiService.getCachedUser();
+          if (cachedUser != null) {
+            final user = User.fromJson(cachedUser);
+            _userNotifier.setUser(user);
+            state = state.copyWith(
+              isLoading: false,
+              isAuthenticated: true,
+              needsLock: true,
+            );
+            return true;
+          }
+        }
+        // Non-network error (401, etc.) — invalid token, clear auth
+        await _apiService.clearAuth();
+        state = state.copyWith(isLoading: false, isAuthenticated: false);
+        return false;
       }
+
+      await _apiService.clearAuth();
     } on DioException catch (e) {
-      // Only clear auth on 401 Unauthorized — 403, timeout, or network issues
-      // should NOT invalidate a valid token.
       if (e.response?.statusCode == 401) {
         await _apiService.clearAuth();
       }
     } catch (e) {
-      // Catch platform keystore decryption exceptions or offline issues.
-      // If it is a Keystore corruption exception, we clear storage to allow a fresh login.
       if (e.toString().contains('PlatformException') || e.toString().contains('keystore')) {
         try {
           await _apiService.clearAuth();
@@ -87,6 +117,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         if (tenantDomain != null) {
           await _apiService.saveTenant(tenantDomain);
         }
+        await _apiService.saveCachedUser(userData);
 
         final user = User.fromJson(userData);
         _userNotifier.setUser(user);
@@ -110,7 +141,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Converts a DioException into a human-readable message.
   static String _dioErrorMessage(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
@@ -156,6 +186,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         if (tenantDomain != null) {
           await _apiService.saveTenant(tenantDomain);
         }
+        await _apiService.saveCachedUser(userData);
 
         final user = User.fromJson(userData);
         _userNotifier.setUser(user);

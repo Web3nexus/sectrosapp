@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
-import 'notifications_notifier.dart';
+
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../models/notification.dart';
 import '../../../widgets/common/skeleton_loader.dart';
 import '../../../widgets/common/empty_state.dart';
 import '../../../widgets/common/error_view.dart';
-import '../../../widgets/common/animations.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../widgets/design_system/app_card.dart';
+import 'notifications_notifier.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -16,27 +19,29 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(notificationsProvider);
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
         title: Row(
           children: [
-            Text(
-              'Notifications',
-              style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            const Text('Notifications'),
             if (state.unreadCount > 0) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.error,
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
                   '${state.unreadCount}',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -45,45 +50,68 @@ class NotificationsScreen extends ConsumerWidget {
         actions: [
           if (state.unreadCount > 0)
             TextButton(
-              onPressed: () => ref.read(notificationsProvider.notifier).markAllRead(),
-              child: const Text('Mark All Read', style: TextStyle(fontSize: 12)),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                ref.read(notificationsProvider.notifier).markAllRead();
+              },
+              child: Text(
+                'Mark all read',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkPrimaryTeal : AppColors.primary,
+                ),
+              ),
             ),
           IconButton(
             icon: const Icon(LucideIcons.refreshCw, size: 20),
-            onPressed: () => ref.read(notificationsProvider.notifier).fetch(),
+            tooltip: 'Refresh',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              ref.read(notificationsProvider.notifier).fetch();
+            },
           ),
+          const SizedBox(width: AppSpacing.s8),
         ],
       ),
-      body: _buildBody(context, state, ref),
+      body: _buildBody(context, state, ref, isDark),
     );
   }
 
-  Widget _buildBody(BuildContext context, NotificationsState state, WidgetRef ref) {
+  Widget _buildBody(BuildContext context, NotificationsState state, WidgetRef ref, bool isDark) {
     if (state.isLoading && state.list.isEmpty) {
-      return const SkeletonLoader(type: SkeletonType.listTile, itemCount: 8);
+      return const Padding(
+        padding: EdgeInsets.all(AppSpacing.pagePadding),
+        child: SkeletonLoader(type: SkeletonType.listTile, itemCount: 6),
+      );
     }
     if (state.error != null && state.list.isEmpty) {
-      return ErrorView(
-        message: state.error!,
-        onRetry: () => ref.read(notificationsProvider.notifier).fetch(),
+      return Center(
+        child: ErrorView(
+          message: state.error!,
+          onRetry: () => ref.read(notificationsProvider.notifier).fetch(),
+        ),
       );
     }
     if (state.list.isEmpty) {
-      return const EmptyState(
-        icon: LucideIcons.bell,
-        title: 'No notifications',
-        subtitle: 'You\'re all caught up!',
+      return const Center(
+        child: EmptyState(
+          icon: LucideIcons.bell,
+          title: 'No notifications',
+          subtitle: 'You are completely caught up!',
+        ),
       );
     }
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 120),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.pagePadding, AppSpacing.s8, AppSpacing.pagePadding, 100),
       itemCount: state.list.length,
       itemBuilder: (context, index) {
         final notif = state.list[index];
-        return AnimatedListItem(
-          index: index,
-          child: _NotificationTile(
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+          child: _NotificationCard(
             notification: notif,
+            isDark: isDark,
             onTap: () {
               if (notif.isUnread) {
                 ref.read(notificationsProvider.notifier).markRead(notif.id);
@@ -96,14 +124,19 @@ class NotificationsScreen extends ConsumerWidget {
   }
 }
 
-class _NotificationTile extends StatelessWidget {
+class _NotificationCard extends StatelessWidget {
   final AppNotification notification;
+  final bool isDark;
   final VoidCallback onTap;
 
-  const _NotificationTile({required this.notification, required this.onTap});
+  const _NotificationCard({
+    required this.notification,
+    required this.isDark,
+    required this.onTap,
+  });
 
   IconData _icon() {
-    switch (notification.type) {
+    switch ((notification.type ?? '').toLowerCase()) {
       case 'order':
         return LucideIcons.shoppingBag;
       case 'reservation':
@@ -116,105 +149,94 @@ class _NotificationTile extends StatelessWidget {
   }
 
   Color _color() {
-    switch (notification.type) {
+    switch ((notification.type ?? '').toLowerCase()) {
       case 'error':
-        return AppColors.destructive;
+        return AppColors.error;
       case 'reservation':
         return AppColors.success;
       case 'order':
         return AppColors.primary;
       default:
-        return AppColors.accent;
+        return AppColors.warning;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _color();
+    final isUnread = notification.isUnread;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.all(14),
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.s14),
+      backgroundColor: isUnread
+          ? (isDark ? AppColors.darkElevated : AppColors.primaryLight.withValues(alpha: 0.25))
+          : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCard : AppColors.card,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: notification.isUnread
-                    ? color.withValues(alpha: 0.2)
-                    : AppColors.border.withValues(alpha: 0.2),
-              ),
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: Row(
+            child: Center(
+              child: Icon(_icon(), size: 18, color: color),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: notification.isUnread ? 0.15 : 0.06),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(_icon(), size: 20, color: color),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        notification.title,
+                        style: TextStyle(
+                          fontWeight: isUnread ? FontWeight.w700 : FontWeight.w600,
+                          fontSize: 14,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (isUnread)
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              notification.title,
-                              style: TextStyle(
-                                fontWeight: notification.isUnread ? FontWeight.w700 : FontWeight.w500,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                          if (notification.isUnread)
-                            Container(
-                              width: 8, height: 8,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        notification.message,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.mutedForeground,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _timeAgo(notification.createdAt),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.mutedForeground.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 3),
+                Text(
+                  notification.message,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _timeAgo(notification.createdAt),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
                   ),
                 ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

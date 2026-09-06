@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import '../../../models/user.dart';
 import '../../../core/api/api_service.dart';
+import '../../../core/services/biometric_service.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -232,6 +233,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   final api = ref.read(apiServiceProvider);
                   await api.logout();
                   ref.read(userProvider.notifier).logout();
+                  final bio = ref.read(biometricServiceProvider);
+                  await bio.clear();
                   if (context.mounted) context.go('/login');
                 },
                 style: ElevatedButton.styleFrom(

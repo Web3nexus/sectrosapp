@@ -1,21 +1,29 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
+import '../../models/user.dart';
 
-final apiServiceProvider = Provider((ref) => ApiService());
+final apiServiceProvider = Provider<ApiService>((ref) {
+  final api = ApiService(
+    onUnauthorized: () {
+      ref.read(userProvider.notifier).logout();
+    },
+  );
+  return api;
+});
 
 class ApiService {
   final Dio _dio;
   final _storage = const FlutterSecureStorage();
+  final void Function()? onUnauthorized;
 
-  ApiService() : _dio = Dio() {
+  ApiService({this.onUnauthorized}) : _dio = Dio() {
     _dio.options.baseUrl = AppConfig.apiUrl;
     _dio.options.headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      // Use a real mobile browser UA so Cloudflare Bot Fight Mode
-      // doesn't block Dart's default 'Dart/x.x (dart:io)' agent.
       'User-Agent':
           'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
           'AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 '
@@ -39,9 +47,10 @@ class ApiService {
         return handler.next(options);
       },
       onError: (DioException e, handler) async {
-        // Pass 401s through — do NOT clear auth here.
-        // Individual screens show "session expired" and only a
-        // manual logout (or tryAutoLogin failure) clears credentials.
+        if (e.response?.statusCode == 401) {
+          await clearAuth();
+          onUnauthorized?.call();
+        }
         return handler.next(e);
       },
     ));
@@ -61,9 +70,20 @@ class ApiService {
     await _storage.write(key: 'tenant_domain', value: domain);
   }
 
+  Future<void> saveCachedUser(Map<String, dynamic> userData) async {
+    await _storage.write(key: 'cached_user', value: jsonEncode(userData));
+  }
+
+  Future<Map<String, dynamic>?> getCachedUser() async {
+    final raw = await _storage.read(key: 'cached_user');
+    if (raw == null) return null;
+    return jsonDecode(raw) as Map<String, dynamic>;
+  }
+
   Future<void> clearAuth() async {
     await _storage.delete(key: 'auth_token');
     await _storage.delete(key: 'tenant_domain');
+    await _storage.delete(key: 'cached_user');
   }
 
   Future<void> logout() async {
