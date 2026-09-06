@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Modern Hospitality SaaS Design System Colors
 class AppColors {
-  // ── Primary Brand: Deep Teal / Hospitality Green ──────────────────────────
-  static const primary          = Color(0xFF12B886); // Main primary brand
-  static const primaryDark      = Color(0xFF0F9F75); // Pressed / hover
-  static const primaryLight     = Color(0xFFDDF7EF); // Soft tint / active container
+  // ── Primary Brand: Vibrant Emerald / Hospitality Green ───────────────────
+  static const primary          = Color(0xFF11C685); // Main primary brand (new logo)
+  static const primaryDark      = Color(0xFF0EA870); // Pressed / hover
+  static const primaryLight     = Color(0xFFD1FAE5); // Soft tint / active container
+  static const primaryBlue      = Color(0xFF0071E3); // Alternate classic blue brand
 
   // ── Dark Navy: Contextual Headers & High Priority ─────────────────────────
   static const darkNavy         = Color(0xFF172A3A); // Property headers, dark cards
