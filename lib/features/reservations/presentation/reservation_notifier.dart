@@ -40,7 +40,11 @@ class ReservationNotifier extends StateNotifier<ReservationsState> {
     try {
       final response = await _apiService.client.get('/reservations');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List ? response.data : [];
+        // Handle both paginated ({data: [...]}) and plain array responses
+        final raw = response.data;
+        final List<dynamic> data = raw is Map
+            ? (raw['data'] as List? ?? [])
+            : (raw is List ? raw : []);
         final reservations = data.map((json) => Reservation.fromJson(json)).toList();
         state = state.copyWith(isLoading: false, reservations: reservations);
       }

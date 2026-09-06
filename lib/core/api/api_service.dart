@@ -47,10 +47,10 @@ class ApiService {
         return handler.next(options);
       },
       onError: (DioException e, handler) async {
-        if (e.response?.statusCode == 401) {
-          await clearAuth();
-          onUnauthorized?.call();
-        }
+        // 401 is handled per-call (e.g. in tryAutoLogin).
+        // We intentionally do NOT logout globally here —
+        // a 401 on /reservations or any other resource should
+        // just surface as an error on that screen, not wipe auth.
         return handler.next(e);
       },
     ));

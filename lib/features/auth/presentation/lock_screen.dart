@@ -19,6 +19,8 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
   bool _isAuthenticating = false;
   bool _isSettingUpPin = false;
   bool _skipBiometricPrompt = false;
+  // Incremented to force PinKeypad rebuild (clears internal dot state)
+  int _pinStage = 0;
 
   @override
   void initState() {
@@ -81,7 +83,10 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     if (valid && mounted) {
       _unlock();
     } else {
-      setState(() => _error = 'Incorrect PIN');
+      setState(() {
+        _error = 'Incorrect PIN';
+        _pinStage++; // clears PinKeypad dots via key rebuild
+      });
       _pinController.clear();
     }
   }
@@ -94,6 +99,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     if (_confirmPinController.text.isEmpty) {
       setState(() {
         _confirmPinController.text = pin;
+        _pinStage++; // forces PinKeypad to rebuild with empty dots
       });
       _pinController.clear();
     } else {
@@ -115,8 +121,9 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
         setState(() {
           _error = 'PINs do not match';
           _confirmPinController.clear();
-          _pinController.clear();
+          _pinStage++; // reset PinKeypad dots
         });
+        _pinController.clear();
       }
     }
   }
@@ -191,6 +198,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
                 ),
               ),
             PinKeypad(
+              key: ValueKey(_pinStage),
               controller: _pinController,
               onCompleted: _isSettingUpPin ? _onPinSetup : _onPinEntered,
             ),
