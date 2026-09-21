@@ -15,6 +15,7 @@ import '../../../widgets/design_system/status_badge.dart';
 import '../../../widgets/design_system/filter_bar.dart';
 import '../../../widgets/design_system/app_bottom_sheet.dart';
 import '../../../widgets/design_system/app_button.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import 'order_notifier.dart';
 
 class OrdersScreen extends ConsumerStatefulWidget {
@@ -57,6 +58,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: const Text('Live Orders & Kitchen'),
         actions: [
           IconButton(

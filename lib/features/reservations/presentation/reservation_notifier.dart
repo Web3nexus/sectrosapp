@@ -69,6 +69,43 @@ class ReservationNotifier extends StateNotifier<ReservationsState> {
       return 'Something went wrong';
     }
   }
+
+  Future<String?> updateStatus(
+    int reservationId,
+    String status, {
+    String? confirmedBy,
+  }) async {
+    try {
+      final response = await _apiService.client.patch(
+        '/reservations/$reservationId/status',
+        data: {
+          'status': status,
+          'confirmed_by': ?confirmedBy,
+        },
+      );
+      if (response.statusCode == 200) {
+        await fetchReservations();
+        return null;
+      }
+      return response.data?['message'] ?? 'Failed to update reservation';
+    } on DioException catch (e) {
+      return ApiError.fromDio(e).message;
+    } catch (e) {
+      return 'Something went wrong';
+    }
+  }
+
+  Future<String?> fetchBookingUrl() async {
+    try {
+      final response = await _apiService.client.get('/configuration/booking-link');
+      if (response.statusCode == 200) {
+        return response.data?['booking_url'] ?? response.data?['homepage_url'];
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 final reservationsProvider = StateNotifierProvider<ReservationNotifier, ReservationsState>((ref) {

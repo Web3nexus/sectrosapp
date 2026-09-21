@@ -10,6 +10,7 @@ import '../../../models/reservation.dart';
 import '../../../widgets/design_system/app_card.dart';
 import '../../../widgets/design_system/status_badge.dart';
 import '../../../widgets/design_system/app_button.dart';
+import 'reservation_notifier.dart';
 
 class ReservationDetailScreen extends ConsumerStatefulWidget {
   final Reservation reservation;
@@ -193,6 +194,39 @@ class _ReservationDetailScreenState extends ConsumerState<ReservationDetailScree
                     value: res.tableNumber != null ? 'Table ${res.tableNumber}' : 'Unassigned',
                     isDark: isDark,
                   ),
+                  if (res.confirmationCode != null && res.confirmationCode!.isNotEmpty) ...[
+                    const Divider(height: AppSpacing.s16),
+                    _DetailRow(
+                      icon: LucideIcons.keyRound,
+                      label: 'Guest Confirmation Code',
+                      value: res.confirmationCode!,
+                      isDark: isDark,
+                      trailing: AppIconButton(
+                        icon: LucideIcons.copy,
+                        size: 32,
+                        tooltip: 'Copy Confirmation Code',
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: res.confirmationCode!));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Confirmation code copied')),
+                          );
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.s10),
+                      child: Text(
+                        res.status.toLowerCase() == 'confirmed'
+                            ? 'Guest has confirmed this booking (or it was confirmed in-house).'
+                            : 'Ask the guest for this code to confirm their booking in-house, or use Confirm below.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.35,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -319,31 +353,38 @@ class _ReservationDetailScreenState extends ConsumerState<ReservationDetailScree
   Future<void> _handleConfirm(BuildContext context) async {
     HapticFeedback.mediumImpact();
     setState(() => _isActionLoading = true);
-    await Future.delayed(const Duration(milliseconds: 400));
-    if (mounted) {
-      setState(() {
-        _isActionLoading = false;
-        _reservation = Reservation(
-          id: _reservation.id,
-          customerName: _reservation.customerName,
-          tableNumber: _reservation.tableNumber,
-          date: _reservation.date,
-          time: _reservation.time,
-          guests: _reservation.guests,
-          status: 'confirmed',
-          phone: _reservation.phone,
-          email: _reservation.email,
-          notes: _reservation.notes,
+
+    // Button shows "Confirm" for pending bookings and "Seat Guest" once the
+    // booking is already confirmed — send the matching status.
+    final isConfirmed = _reservation.status.toLowerCase() == 'confirmed';
+    final nextStatus = isConfirmed ? 'seated' : 'confirmed';
+
+    final error = await ref
+        .read(reservationsProvider.notifier)
+        .updateStatus(
+          _reservation.id,
+          nextStatus,
+          confirmedBy: isConfirmed ? null : 'staff',
         );
-      });
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Reservation status updated to Confirmed'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
+
+    if (!context.mounted) return;
+    setState(() => _isActionLoading = false);
+
+    _applyFreshReservation();
+
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isConfirmed
+              ? 'Guest marked as seated.'
+              : 'Reservation confirmed — the guest has been notified by email/SMS.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: AppColors.error),
+      );
     }
   }
 
@@ -368,34 +409,38 @@ class _ReservationDetailScreenState extends ConsumerState<ReservationDetailScree
       ),
     );
 
-    if (shouldCancel == true && mounted) {
-      setState(() => _isActionLoading = true);
-      await Future.delayed(const Duration(milliseconds: 400));
-      if (mounted) {
-        setState(() {
-          _isActionLoading = false;
-          _reservation = Reservation(
-            id: _reservation.id,
-            customerName: _reservation.customerName,
-            tableNumber: _reservation.tableNumber,
-            date: _reservation.date,
-            time: _reservation.time,
-            guests: _reservation.guests,
-            status: 'cancelled',
-            phone: _reservation.phone,
-            email: _reservation.email,
-            notes: _reservation.notes,
-          );
-        });
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Reservation cancelled'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
+    if (shouldCancel != true || !context.mounted) return;
+
+    setState(() => _isActionLoading = true);
+    final error = await ref
+        .read(reservationsProvider.notifier)
+        .updateStatus(_reservation.id, 'cancelled');
+
+    if (!context.mounted) return;
+    setState(() => _isActionLoading = false);
+
+    _applyFreshReservation();
+
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reservation cancelled'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
+  void _applyFreshReservation() {
+    final current = ref.read(reservationsProvider).reservations
+        .where((r) => r.id == _reservation.id)
+        .toList();
+    if (current.isNotEmpty) {
+      setState(() => _reservation = current.first);
     }
   }
 }

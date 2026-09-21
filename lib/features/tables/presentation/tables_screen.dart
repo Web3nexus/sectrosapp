@@ -15,6 +15,7 @@ import '../../../widgets/design_system/resource_card.dart';
 import '../../../widgets/design_system/app_bottom_sheet.dart';
 import '../../../widgets/design_system/app_button.dart';
 import '../../../widgets/design_system/status_badge.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import 'table_notifier.dart';
 
 class TablesScreen extends ConsumerStatefulWidget {
@@ -68,6 +69,7 @@ class _TablesScreenState extends ConsumerState<TablesScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: Text(title),
         actions: [
           IconButton(

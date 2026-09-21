@@ -9,6 +9,7 @@ class Reservation {
   final String? phone;
   final String? email;
   final String? notes;
+  final String? confirmationCode;
 
   Reservation({
     required this.id,
@@ -21,6 +22,7 @@ class Reservation {
     this.phone,
     this.email,
     this.notes,
+    this.confirmationCode,
   });
 
   factory Reservation.fromJson(Map<String, dynamic> json) {
@@ -63,6 +65,7 @@ class Reservation {
       phone: json['phone']?.toString() ?? json['customer_phone']?.toString(),
       email: json['email']?.toString() ?? json['customer_email']?.toString(),
       notes: json['notes']?.toString() ?? json['special_requests']?.toString(),
+      confirmationCode: json['confirmation_code']?.toString(),
     );
   }
 }

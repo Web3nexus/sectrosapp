@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/staff_dashboard_data.dart';
 import '../../../widgets/common/skeleton_loader.dart';
 import '../../../widgets/common/error_view.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import '../../notifications/presentation/notifications_notifier.dart';
 import '../../procurement/presentation/purchase_list_card.dart';
 import 'staff_dashboard_notifier.dart';
@@ -23,6 +24,7 @@ class StaffDashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: const Text('My Dashboard'),
         centerTitle: false,
         actions: [

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -12,6 +14,7 @@ import '../../../widgets/design_system/app_search_input.dart';
 import '../../../widgets/design_system/filter_bar.dart';
 import '../../../widgets/design_system/reservation_card.dart';
 import '../../../widgets/design_system/app_button.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import 'reservation_notifier.dart';
 import 'create_booking_sheet.dart';
 import 'reservation_detail_screen.dart';
@@ -80,8 +83,16 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: const Text('Bookings'),
         actions: [
+          AppIconButton(
+            icon: LucideIcons.share2,
+            tooltip: 'Share booking link',
+            hasBorder: false,
+            onPressed: _handleShareLink,
+          ),
+          const SizedBox(width: AppSpacing.s4),
           AppIconButton(
             icon: LucideIcons.calendarPlus,
             tooltip: 'Add Reservation',
@@ -189,6 +200,130 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _handleShareLink() async {
+    HapticFeedback.lightImpact();
+    final url = await ref.read(reservationsProvider.notifier).fetchBookingUrl();
+    if (!mounted) return;
+
+    if (url == null || url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No booking link available. Make sure your website is published.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    await _showShareSheet(url);
+  }
+
+  Future<void> _showShareSheet(String url) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Future<void> copy() async {
+      await Clipboard.setData(ClipboardData(text: url));
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Booking link copied to clipboard')),
+        );
+      }
+    }
+
+    Future<void> share() async {
+      // Capture the anchor rect before popping — UIActivityViewController
+      // on iPad/macOS throws without a sharePositionOrigin.
+      final box = context.findRenderObject() as RenderBox?;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : null;
+      if (context.mounted) Navigator.of(context).pop();
+      await SharePlus.instance.share(
+        ShareParams(text: url, sharePositionOrigin: origin),
+      );
+    }
+
+    Future<void> open() async {
+      final uri = Uri.tryParse(url);
+      final launched = uri != null &&
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open the link on this device.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
+      showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: AppSpacing.pagePadding,
+          right: AppSpacing.pagePadding,
+          bottom: MediaQuery.of(ctx).padding.bottom + AppSpacing.s16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Share booking link',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Send this link to guests so they can book online. The restaurant confirms link/form bookings before they are marked confirmed.',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.s12),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBackground : AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.border,
+                ),
+              ),
+              child: Text(
+                url,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkPrimaryTeal : AppColors.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            Row(
+              children: [
+                Expanded(child: AppButton(label: 'Copy', icon: LucideIcons.copy, onPressed: copy)),
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(child: AppButton(label: 'Share', icon: LucideIcons.send, onPressed: share)),
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(child: AppButton(label: 'Open', icon: LucideIcons.externalLink, onPressed: open)),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

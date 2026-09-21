@@ -9,6 +9,7 @@ import '../../../core/api/api_service.dart';
 import '../../../core/services/biometric_service.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -152,6 +153,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: Text(
           'Profile',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(

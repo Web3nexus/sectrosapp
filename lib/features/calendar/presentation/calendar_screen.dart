@@ -11,6 +11,7 @@ import '../../../widgets/common/empty_state.dart';
 import '../../../widgets/design_system/app_card.dart';
 import '../../../widgets/design_system/horizontal_date_selector.dart';
 import '../../../widgets/design_system/reservation_card.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import '../../reservations/presentation/reservation_notifier.dart';
 import '../../reservations/presentation/create_booking_sheet.dart';
 import '../../reservations/presentation/reservation_detail_screen.dart';
@@ -45,6 +46,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: Text(monthYearStr),
         actions: [
           IconButton(

@@ -13,6 +13,7 @@ import '../../../widgets/design_system/filter_bar.dart';
 import '../../../widgets/design_system/customer_card.dart';
 import '../../../widgets/design_system/app_bottom_sheet.dart';
 import '../../../widgets/design_system/app_button.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import 'customers_notifier.dart';
 
 class CustomersScreen extends ConsumerStatefulWidget {
@@ -67,6 +68,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: const Text('Customer Directory'),
       ),
       body: RefreshIndicator(

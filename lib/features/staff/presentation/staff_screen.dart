@@ -9,6 +9,7 @@ import '../../../widgets/common/empty_state.dart';
 import '../../../widgets/common/error_view.dart';
 import '../../../widgets/common/animations.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 
 class StaffScreen extends ConsumerStatefulWidget {
   const StaffScreen({super.key});
@@ -135,6 +136,7 @@ class _StaffScreenState extends ConsumerState<StaffScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: Text(
           'Staff',
           style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),

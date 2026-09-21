@@ -14,6 +14,7 @@ import '../../../widgets/design_system/app_card.dart';
 import '../../../widgets/design_system/metric_card.dart';
 import '../../../widgets/design_system/reservation_card.dart';
 import '../../../widgets/design_system/app_button.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import '../../../widgets/main_layout.dart';
 import '../presentation/dashboard_notifier.dart';
 import '../../reservations/presentation/reservation_notifier.dart';
@@ -67,6 +68,8 @@ class HomeDashboard extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    AppNavMenuButton(),
+                    const SizedBox(width: AppSpacing.s8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

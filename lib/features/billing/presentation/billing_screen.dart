@@ -6,6 +6,7 @@ import '../../../models/billing_plan.dart';
 import '../../../widgets/common/skeleton_loader.dart';
 import '../../../widgets/common/error_view.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 
 class BillingScreen extends ConsumerWidget {
   const BillingScreen({super.key});
@@ -17,6 +18,7 @@ class BillingScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: Text(
           'Billing',
           style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),

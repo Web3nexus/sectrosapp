@@ -13,6 +13,7 @@ import '../../../widgets/common/error_view.dart';
 import '../../../widgets/common/empty_state.dart';
 import '../../../widgets/design_system/app_card.dart';
 import '../../../widgets/design_system/metric_card.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import 'finance_notifier.dart';
 
 class FinanceScreen extends ConsumerWidget {
@@ -26,6 +27,7 @@ class FinanceScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: const Text('Finance & Cash Book'),
         actions: [
           IconButton(

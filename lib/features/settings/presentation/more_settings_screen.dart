@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../models/user.dart';
 import '../../../widgets/design_system/app_card.dart';
 import '../../../widgets/design_system/app_button.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import '../../notifications/presentation/notifications_notifier.dart';
 
 class MoreSettingsScreen extends ConsumerWidget {
@@ -23,6 +24,7 @@ class MoreSettingsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: const Text('More & Settings'),
       ),
       body: ListView(

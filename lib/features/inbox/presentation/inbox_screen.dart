@@ -7,6 +7,7 @@ import '../../../widgets/common/skeleton_loader.dart';
 import '../../../widgets/common/empty_state.dart';
 import '../../../widgets/common/error_view.dart';
 import '../../../widgets/common/animations.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import '../../../core/theme/app_colors.dart';
 
 class InboxScreen extends ConsumerWidget {
@@ -18,6 +19,7 @@ class InboxScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: Row(
           children: [
             Text(

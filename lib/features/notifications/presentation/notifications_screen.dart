@@ -11,6 +11,7 @@ import '../../../widgets/common/skeleton_loader.dart';
 import '../../../widgets/common/empty_state.dart';
 import '../../../widgets/common/error_view.dart';
 import '../../../widgets/design_system/app_card.dart';
+import '../../../widgets/navigation/app_nav_menu.dart';
 import 'notifications_notifier.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -24,6 +25,7 @@ class NotificationsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppNavMenuButton(),
         title: Row(
           children: [
             const Text('Notifications'),
