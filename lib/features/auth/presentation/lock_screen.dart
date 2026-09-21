@@ -129,7 +129,14 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
   }
 
   void _unlock() {
-    context.go('/dashboard');
+    // When the lock screen was pushed on top of the shell (app resumed from
+    // background) pop back to where we were. On a cold start the lock screen
+    // is the root route, so navigate to the dashboard instead.
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/dashboard');
+    }
   }
 
   void _skipPinSetup() async {

@@ -157,6 +157,7 @@ class _LockAwareShell extends ConsumerStatefulWidget {
 class _LockAwareShellState extends ConsumerState<_LockAwareShell>
     with WidgetsBindingObserver {
   bool _locked = false;
+  bool _lockShowing = false;
 
   @override
   void initState() {
@@ -172,29 +173,55 @@ class _LockAwareShellState extends ConsumerState<_LockAwareShell>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      setState(() => _locked = true);
+    // Lock whenever the app leaves the foreground so a PIN is required
+    // before the app can be used again.
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+      _locked = true;
     }
-    if (state == AppLifecycleState.resumed && _locked) {
+    if (state == AppLifecycleState.resumed && _locked && !_lockShowing) {
       _showLockScreen();
     }
   }
 
   void _showLockScreen() {
+    final router = GoRouter.of(context);
+    if (router.routeInformationProvider.value.uri.path == '/lock') {
+      // Already on the lock screen — just reset the flag.
+      _locked = false;
+      return;
+    }
+
+    _lockShowing = true;
     final bio = ref.read(biometricServiceProvider);
-    bio.isLockEnabled().then((enabled) {
-      if (enabled && mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const LockScreen(),
-            fullscreenDialog: true,
-          ),
-        ).then((_) {
-          if (mounted) setState(() => _locked = false);
-        });
-      } else {
-        if (mounted) setState(() => _locked = false);
+    bio.isLockEnabled()
+        .catchError((_) => false)
+        .then((enabled) {
+      if (!enabled || !mounted) {
+        if (mounted) {
+          setState(() {
+            _locked = false;
+            _lockShowing = false;
+          });
+        }
+        return;
       }
+      // Push through go_router so the lock screen becomes part of the
+      // navigation stack and can be cleanly popped once the PIN is entered.
+      context.push('/lock').then((_) {
+        if (mounted) {
+          setState(() {
+            _locked = false;
+            _lockShowing = false;
+          });
+        }
+      }).catchError((_) {
+        if (mounted) {
+          setState(() {
+            _locked = false;
+            _lockShowing = false;
+          });
+        }
+      });
     });
   }
 
