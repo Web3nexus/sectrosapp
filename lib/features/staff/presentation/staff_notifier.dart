@@ -45,13 +45,16 @@ class StaffNotifier extends StateNotifier<StaffState> {
             .whereType<Map>()
             .map((j) => StaffProfile.fromJson(Map<String, dynamic>.from(j)))
             .toList();
-        state = state.copyWith(isLoading: false, staff: staff);
+        state = state.copyWith(isLoading: false, staff: staff, error: null);
+      } else {
+        final msg = response.data is Map ? (response.data['message'] ?? response.data['error']) : null;
+        state = state.copyWith(isLoading: false, error: msg?.toString() ?? 'Failed to load staff (${response.statusCode})');
       }
     } on DioException catch (e) {
       final err = ApiError.fromDio(e);
       state = state.copyWith(isLoading: false, error: err.message);
-    } catch (_) {
-      state = state.copyWith(isLoading: false, error: 'Something went wrong');
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: 'Could not load staff: $e');
     }
   }
 

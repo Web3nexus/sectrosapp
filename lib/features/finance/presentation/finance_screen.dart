@@ -184,6 +184,99 @@ class FinanceScreen extends ConsumerWidget {
             ],
           ),
 
+          const SizedBox(height: AppSpacing.s16),
+
+          // Tips & Staff Gratuities Transparency Card
+          AppCard(
+            padding: const EdgeInsets.all(AppSpacing.s16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(LucideIcons.heartHandshake, size: 18, color: Colors.amber),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Staff Tips & Gratuities',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                              ),
+                            ),
+                            const Text(
+                              'Separated from wages • Held for staff payout',
+                              style: TextStyle(fontSize: 11, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s16),
+                const Divider(height: 1),
+                const SizedBox(height: AppSpacing.s14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Total Collected', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          const SizedBox(height: 2),
+                          Text(
+                            fmt.format(overview.totalTips),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Undisbursed (Owed)', style: TextStyle(fontSize: 11, color: Colors.orange)),
+                          const SizedBox(height: 2),
+                          Text(
+                            fmt.format(overview.pendingTips),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Disbursed (Paid)', style: TextStyle(fontSize: 11, color: Colors.green)),
+                          const SizedBox(height: 2),
+                          Text(
+                            fmt.format(overview.disbursedTips),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
           const SizedBox(height: AppSpacing.s24),
 
           // Recent Transactions Section

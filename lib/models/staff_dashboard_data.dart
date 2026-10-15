@@ -69,14 +69,27 @@ class StaffSummary {
   final double weeklyHours;
   final double monthlyHours;
   final double monthlyPayout;
+  final double totalTips;
+  final double pendingTips;
+  final double disbursedTips;
 
-  StaffSummary({required this.weeklyHours, required this.monthlyHours, required this.monthlyPayout});
+  StaffSummary({
+    required this.weeklyHours,
+    required this.monthlyHours,
+    required this.monthlyPayout,
+    this.totalTips = 0.0,
+    this.pendingTips = 0.0,
+    this.disbursedTips = 0.0,
+  });
 
   factory StaffSummary.fromJson(Map<String, dynamic> json) {
     return StaffSummary(
       weeklyHours: (json['weekly_hours'] as num?)?.toDouble() ?? 0,
       monthlyHours: (json['monthly_hours'] as num?)?.toDouble() ?? 0,
       monthlyPayout: (json['monthly_payout'] as num?)?.toDouble() ?? 0,
+      totalTips: (json['total_tips'] as num?)?.toDouble() ?? 0,
+      pendingTips: (json['pending_tips'] as num?)?.toDouble() ?? 0,
+      disbursedTips: (json['disbursed_tips'] as num?)?.toDouble() ?? 0,
     );
   }
 }

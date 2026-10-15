@@ -92,6 +92,8 @@ class StaffDashboardScreen extends ConsumerWidget {
           _ProfileCard(profile: data.profile, theme: theme),
           const SizedBox(height: 16),
           _SummaryCards(summary: data.summary, theme: theme),
+          const SizedBox(height: 12),
+          _TipsSummaryCard(summary: data.summary, theme: theme),
           const SizedBox(height: 16),
           if (data.nextShift != null) ...[
             _NextShiftCard(shift: data.nextShift!, theme: theme),
@@ -190,6 +192,90 @@ class _SummaryCards extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(child: _Card(label: 'Payout', value: '\$${summary.monthlyPayout.toStringAsFixed(0)}', icon: LucideIcons.wallet, color: Colors.orange, theme: theme)),
       ],
+    );
+  }
+}
+
+class _TipsSummaryCard extends StatelessWidget {
+  final StaffSummary summary;
+  final ThemeData theme;
+  const _TipsSummaryCard({required this.summary, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.heartHandshake, size: 16, color: Colors.amber),
+              const SizedBox(width: 8),
+              const Text(
+                'My Tips & Gratuities',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.amber),
+              ),
+              const Spacer(),
+              Text(
+                'Total: \$${summary.totalTips.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Pending Payout', style: TextStyle(fontSize: 11, color: Colors.orange)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '\$${summary.pendingTips.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Paid Out', style: TextStyle(fontSize: 11, color: Colors.green)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '\$${summary.disbursedTips.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

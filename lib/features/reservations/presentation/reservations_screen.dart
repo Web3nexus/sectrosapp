@@ -47,6 +47,7 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
     final confirmedCount = allList.where((r) => r.status.toLowerCase().contains('confirm') || r.status.toLowerCase() == 'active').length;
     final pendingCount = allList.where((r) => r.status.toLowerCase().contains('pend') || r.status.toLowerCase() == 'waiting').length;
     final arrivedCount = allList.where((r) => r.status.toLowerCase() == 'arrived' || r.status.toLowerCase() == 'seated').length;
+    final completedCount = allList.where((r) => r.status.toLowerCase() == 'completed').length;
     final cancelledCount = allList.where((r) => r.status.toLowerCase().contains('cancel')).length;
 
     final filterItems = [
@@ -54,6 +55,7 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
       FilterItem(key: 'confirmed', label: 'Confirmed', count: confirmedCount),
       FilterItem(key: 'pending', label: 'Pending', count: pendingCount),
       FilterItem(key: 'seated', label: 'Seated', count: arrivedCount),
+      FilterItem(key: 'completed', label: 'Completed', count: completedCount),
       FilterItem(key: 'cancelled', label: 'Cancelled', count: cancelledCount),
     ];
 
@@ -65,6 +67,7 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
         if (_selectedFilter == 'confirmed' && !st.contains('confirm') && st != 'active') return false;
         if (_selectedFilter == 'pending' && !st.contains('pend') && st != 'waiting') return false;
         if (_selectedFilter == 'seated' && st != 'arrived' && st != 'seated') return false;
+        if (_selectedFilter == 'completed' && st != 'completed') return false;
         if (_selectedFilter == 'cancelled' && !st.contains('cancel')) return false;
       }
 
@@ -72,9 +75,10 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
       if (_searchQuery.isNotEmpty) {
         final q = _searchQuery.toLowerCase();
         final nameMatch = res.customerName.toLowerCase().contains(q);
-        final idMatch = '#${res.id}'.contains(q);
+        final idMatch = '#${res.id}'.contains(q) || '${res.id}'.contains(q);
         final phoneMatch = (res.phone ?? '').toLowerCase().contains(q);
-        if (!nameMatch && !idMatch && !phoneMatch) return false;
+        final codeMatch = (res.confirmationCode ?? '').toLowerCase().contains(q);
+        if (!nameMatch && !idMatch && !phoneMatch && !codeMatch) return false;
       }
 
       return true;

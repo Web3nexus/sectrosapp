@@ -10,6 +10,7 @@ import '../../../models/reservation.dart';
 import '../../../widgets/design_system/app_card.dart';
 import '../../../widgets/design_system/status_badge.dart';
 import '../../../widgets/design_system/app_button.dart';
+import '../../../core/utils/subscription_guard.dart';
 import 'reservation_notifier.dart';
 
 class ReservationDetailScreen extends ConsumerStatefulWidget {
@@ -72,22 +73,19 @@ class _ReservationDetailScreenState extends ConsumerState<ReservationDetailScree
         ),
         child: Row(
           children: [
-            Expanded(
-              child: AppButton(
-                label: 'Cancel Booking',
-                variant: AppButtonVariant.destructive,
-                isLoading: _isActionLoading,
-                onPressed: () => _handleCancel(context),
+            if (_reservation.status.toLowerCase() != 'completed' && _reservation.status.toLowerCase() != 'cancelled') ...[
+              Expanded(
+                child: AppButton(
+                  label: 'Cancel Booking',
+                  variant: AppButtonVariant.destructive,
+                  isLoading: _isActionLoading,
+                  onPressed: () => _handleCancel(context),
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
+              const SizedBox(width: AppSpacing.s12),
+            ],
             Expanded(
-              child: AppButton(
-                label: res.status.toLowerCase() == 'confirmed' ? 'Seat Guest' : 'Confirm',
-                variant: AppButtonVariant.primary,
-                isLoading: _isActionLoading,
-                onPressed: () => _handleConfirm(context),
-              ),
+              child: _buildPrimaryActionButton(context, res),
             ),
           ],
         ),
@@ -106,14 +104,32 @@ class _ReservationDetailScreenState extends ConsumerState<ReservationDetailScree
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'BOOKING #${res.id}',
-                        style: const TextStyle(
-                          color: AppColors.navyCardTextMuted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'BOOKING #${res.id}',
+                            style: const TextStyle(
+                              color: AppColors.navyCardTextMuted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          if (res.confirmationCode != null && res.confirmationCode!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                'CODE: ${res.confirmationCode}',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       StatusBadge.fromStatus(res.status),
                     ],
@@ -350,21 +366,65 @@ class _ReservationDetailScreenState extends ConsumerState<ReservationDetailScree
     );
   }
 
-  Future<void> _handleConfirm(BuildContext context) async {
-    HapticFeedback.mediumImpact();
-    setState(() => _isActionLoading = true);
+  Widget _buildPrimaryActionButton(BuildContext context, Reservation res) {
+    final status = res.status.toLowerCase();
+    if (status == 'completed') {
+      return const AppButton(
+        label: 'Booking Completed',
+        icon: LucideIcons.checkCircle,
+        variant: AppButtonVariant.secondary,
+        onPressed: null,
+      );
+    }
+    if (status == 'cancelled') {
+      return const AppButton(
+        label: 'Booking Cancelled',
+        icon: LucideIcons.xCircle,
+        variant: AppButtonVariant.secondary,
+        onPressed: null,
+      );
+    }
+    if (status == 'seated') {
+      return AppButton(
+        label: 'Mark Completed',
+        icon: LucideIcons.checkCheck,
+        variant: AppButtonVariant.primary,
+        isLoading: _isActionLoading,
+        onPressed: () => _handleStatusTransition(context, 'completed'),
+      );
+    }
+    if (status == 'confirmed') {
+      return AppButton(
+        label: 'Seat Guest',
+        icon: LucideIcons.users,
+        variant: AppButtonVariant.primary,
+        isLoading: _isActionLoading,
+        onPressed: () => _handleStatusTransition(context, 'seated'),
+      );
+    }
+    // pending or default
+    return AppButton(
+      label: 'Confirm Booking',
+      icon: LucideIcons.check,
+      variant: AppButtonVariant.primary,
+      isLoading: _isActionLoading,
+      onPressed: () => _handleStatusTransition(context, 'confirmed'),
+    );
+  }
 
-    // Button shows "Confirm" for pending bookings and "Seat Guest" once the
-    // booking is already confirmed — send the matching status.
-    final isConfirmed = _reservation.status.toLowerCase() == 'confirmed';
-    final nextStatus = isConfirmed ? 'seated' : 'confirmed';
+  Future<void> _handleStatusTransition(BuildContext context, String nextStatus) async {
+    HapticFeedback.mediumImpact();
+    if (!SubscriptionGuard.canPerformAction(context, ref, actionName: 'update reservation status')) {
+      return;
+    }
+    setState(() => _isActionLoading = true);
 
     final error = await ref
         .read(reservationsProvider.notifier)
         .updateStatus(
           _reservation.id,
           nextStatus,
-          confirmedBy: isConfirmed ? null : 'staff',
+          confirmedBy: nextStatus == 'confirmed' ? 'staff' : null,
         );
 
     if (!context.mounted) return;
@@ -373,11 +433,14 @@ class _ReservationDetailScreenState extends ConsumerState<ReservationDetailScree
     _applyFreshReservation();
 
     if (error == null) {
+      String msg = 'Status updated.';
+      if (nextStatus == 'confirmed') msg = 'Reservation confirmed — guest notified.';
+      if (nextStatus == 'seated') msg = 'Guest marked as seated.';
+      if (nextStatus == 'completed') msg = 'Booking completed — review link sent to guest.';
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isConfirmed
-              ? 'Guest marked as seated.'
-              : 'Reservation confirmed — the guest has been notified by email/SMS.'),
+          content: Text(msg),
           backgroundColor: AppColors.success,
         ),
       );
@@ -493,7 +556,7 @@ class _DetailRow extends StatelessWidget {
             ],
           ),
         ),
-        if (trailing != null) trailing!,
+        ?trailing,
       ],
     );
   }

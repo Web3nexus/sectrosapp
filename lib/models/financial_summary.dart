@@ -6,6 +6,9 @@ class FinancialSummary {
   final int orderCount;
   final double aov;
   final double profitMargin;
+  final double totalTips;
+  final double pendingTips;
+  final double disbursedTips;
   final List<CategoryBreakdown> categoryBreakdown;
   final SettlementData? latestSettlement;
 
@@ -17,6 +20,9 @@ class FinancialSummary {
     required this.orderCount,
     required this.aov,
     required this.profitMargin,
+    this.totalTips = 0.0,
+    this.pendingTips = 0.0,
+    this.disbursedTips = 0.0,
     required this.categoryBreakdown,
     this.latestSettlement,
   });
@@ -42,6 +48,9 @@ class FinancialSummary {
       orderCount: _toInt(json['order_count']),
       aov: _toDouble(json['aov']),
       profitMargin: _toDouble(json['profit_margin']),
+      totalTips: _toDouble(json['total_tips']),
+      pendingTips: _toDouble(json['pending_tips']),
+      disbursedTips: _toDouble(json['disbursed_tips']),
       categoryBreakdown: (json['category_breakdown'] as List?)
               ?.whereType<Map>()
               .map((e) => CategoryBreakdown.fromJson(Map<String, dynamic>.from(e)))
